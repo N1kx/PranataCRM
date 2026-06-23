@@ -5,7 +5,7 @@ from sqlalchemy import Boolean, DateTime, Index, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import INET, JSONB, UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.shared.base import Base, TimestampMixin, UUIDMixin
+from app.shared.base import AuditMixin, Base, TimestampMixin, UUIDMixin
 from app.shared.types import BillingPlan, SuiteRole
 
 
@@ -66,4 +66,75 @@ class RefreshToken(Base, UUIDMixin):
     __table_args__ = (
         UniqueConstraint("token_hash", name="uq_refresh_tokens_hash"),
         Index("ix_refresh_tokens_user_id", "user_id"),
+    )
+
+
+class Permission(Base, UUIDMixin):
+    """Per-app permission catalog. Global — no RLS."""
+    __tablename__ = "permissions"
+
+    app_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False)
+    code: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default="now()"
+    )
+
+    __table_args__ = (
+        UniqueConstraint("app_id", "code", name="uq_permissions_app_code"),
+        Index("ix_permissions_app_id", "app_id"),
+    )
+
+
+class Role(Base, UUIDMixin, TimestampMixin, AuditMixin):
+    """Per-app role. tenant_id=NULL means global system role. RLS: tenant match OR NULL."""
+    __tablename__ = "roles"
+
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(PGUUID(as_uuid=True), nullable=True)
+    app_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    is_system: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    __table_args__ = (
+        Index("ix_roles_tenant_id", "tenant_id"),
+        Index("ix_roles_app_id", "app_id"),
+    )
+
+
+class RolePermission(Base, UUIDMixin):
+    """Many-to-many: role ↔ permission."""
+    __tablename__ = "role_permissions"
+
+    role_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False)
+    permission_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default="now()"
+    )
+
+    __table_args__ = (
+        UniqueConstraint("role_id", "permission_id", name="uq_role_permissions_pair"),
+        Index("ix_role_permissions_role_id", "role_id"),
+        Index("ix_role_permissions_permission_id", "permission_id"),
+    )
+
+
+class UserRole(Base, UUIDMixin):
+    """Role assignment — bound to an app_seat, not directly to a user. RLS on tenant_id."""
+    __tablename__ = "user_roles"
+
+    tenant_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False)
+    app_seat_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False)
+    role_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default="now()"
+    )
+    created_by: Mapped[uuid.UUID | None] = mapped_column(PGUUID(as_uuid=True), nullable=True)
+    updated_by: Mapped[uuid.UUID | None] = mapped_column(PGUUID(as_uuid=True), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("app_seat_id", "role_id", name="uq_user_roles_seat_role"),
+        Index("ix_user_roles_tenant_id", "tenant_id"),
+        Index("ix_user_roles_app_seat_id", "app_seat_id"),
+        Index("ix_user_roles_role_id", "role_id"),
     )
