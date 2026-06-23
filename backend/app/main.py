@@ -3,11 +3,10 @@ from contextlib import asynccontextmanager
 import redis.asyncio as aioredis
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 from app.config import get_settings
 from app.database import engine
-from app.shared.exceptions import AppError
+from app.shared.exceptions import register_exception_handlers
 
 settings = get_settings()
 
@@ -15,7 +14,9 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # ── Startup ───────────────────────────────────────────────────────────────
-    app.state.redis = aioredis.from_url(settings.redis_url, decode_responses=True)
+    app.state.redis = aioredis.from_url(
+        settings.redis_url, decode_responses=True, socket_connect_timeout=5
+    )
     await app.state.redis.ping()
 
     yield
@@ -32,6 +33,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+register_exception_handlers(app)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"] if not settings.is_production else [],
@@ -39,16 +42,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-# ── Global error handler ──────────────────────────────────────────────────────
-
-@app.exception_handler(AppError)
-async def app_error_handler(request, exc: AppError) -> JSONResponse:
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail},
-    )
 
 
 # ── Health check ──────────────────────────────────────────────────────────────
@@ -80,7 +73,7 @@ async def health() -> dict:
 
 # ── Module routers ────────────────────────────────────────────────────────────
 
-from app.modules.auth.router import router as auth_router
+from app.modules.auth.router import router as auth_router, users_router
 from app.modules.contacts.router import router as contacts_router
 from app.modules.deals.router import router as deals_router
 from app.modules.ai.router import router as ai_router
@@ -89,6 +82,7 @@ from app.modules.billing.router import router as billing_router
 API_PREFIX = "/api/v1"
 
 app.include_router(auth_router, prefix=API_PREFIX)
+app.include_router(users_router, prefix=API_PREFIX)
 app.include_router(contacts_router, prefix=API_PREFIX)
 app.include_router(deals_router, prefix=API_PREFIX)
 app.include_router(ai_router, prefix=API_PREFIX)
