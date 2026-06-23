@@ -7,12 +7,16 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.config import get_settings
-from app.database import Base
+from app.shared.base import Base
 
-# Import all models here so Alembic can detect them for autogenerate.
-# Example (uncomment when models are created):
-# from app.modules.auth.models import *  # noqa: F401, F403
-# from app.modules.contacts.models import *  # noqa: F401, F403
+# Import all models so Alembic autogenerate can detect every table.
+import app.modules.auth.models  # noqa: F401
+import app.modules.licensing.models  # noqa: F401
+import app.modules.contacts.models  # noqa: F401
+import app.modules.deals.models  # noqa: F401
+import app.modules.ai.models  # noqa: F401
+import app.modules.billing.models  # noqa: F401
+import app.modules.reporting.models  # noqa: F401
 
 config = context.config
 settings = get_settings()
