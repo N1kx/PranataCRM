@@ -1,25 +1,49 @@
+import uuid
+
+from app.modules.auth.schemas import (
+    AcceptInviteRequest,
+    AuthUserResponse,
+    CreateUserRequest,
+    InviteUserRequest,
+    LoginRequest,
+    RegisterTenantRequest,
+    RegisterTenantResponse,
+)
 from app.modules.auth.service import AuthService
-from app.modules.auth.schemas import LoginRequest, TokenResponse, RegisterRequest
 
 
 class AuthUseCase:
-    """Entry point for the auth module. Orchestrates AuthService."""
+    """Implements AuthContractProtocol. Delegates to AuthService."""
 
     def __init__(self, service: AuthService) -> None:
         self._service = service
 
-    async def login(self, request: LoginRequest) -> TokenResponse:
-        # Placeholder
-        raise NotImplementedError
+    async def register_tenant(
+        self, payload: RegisterTenantRequest
+    ) -> RegisterTenantResponse:
+        return await self._service.register_tenant(payload)
 
-    async def register(self, request: RegisterRequest) -> TokenResponse:
-        # Placeholder
-        raise NotImplementedError
+    async def create_user(
+        self, payload: CreateUserRequest, actor_id: uuid.UUID, tenant_id: uuid.UUID
+    ) -> AuthUserResponse:
+        return await self._service.create_user(payload, actor_id, tenant_id)
 
-    async def refresh(self, refresh_token: str) -> TokenResponse:
-        # Placeholder
-        raise NotImplementedError
+    async def invite_user(
+        self, payload: InviteUserRequest, actor_id: uuid.UUID, tenant_id: uuid.UUID
+    ) -> None:
+        await self._service.invite_user(payload, actor_id, tenant_id)
 
-    async def logout(self, access_token: str) -> None:
-        # Placeholder
-        raise NotImplementedError
+    async def accept_invite(self, payload: AcceptInviteRequest) -> AuthUserResponse:
+        return await self._service.accept_invite(payload)
+
+    async def login(
+        self,
+        payload: LoginRequest,
+        tenant_slug: str,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+    ) -> tuple[AuthUserResponse, str, str]:
+        return await self._service.login(payload, tenant_slug, ip_address, user_agent)
+
+    async def logout(self, refresh_token: str | None) -> None:
+        await self._service.logout(refresh_token)
