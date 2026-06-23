@@ -1,40 +1,44 @@
-from http import HTTPStatus
+import logging
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+
+logger = logging.getLogger(__name__)
 
 
-class AppError(Exception):
-    status_code: int = HTTPStatus.INTERNAL_SERVER_ERROR
-    detail: str = "An unexpected error occurred."
+class AppException(Exception):
+    status_code: int = 500
+    error_code: str = "INTERNAL_ERROR"
+    message: str = "An unexpected error occurred."
 
     def __init__(self, detail: str | None = None) -> None:
-        self.detail = detail or self.__class__.detail
-        super().__init__(self.detail)
+        self.detail = detail
+        super().__init__(self.message)
 
 
-class NotFoundError(AppError):
-    status_code = HTTPStatus.NOT_FOUND
-    detail = "Resource not found."
+def register_exception_handlers(app: FastAPI) -> None:
+    @app.exception_handler(AppException)
+    async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "error": {
+                    "code": exc.error_code,
+                    "message": exc.message,
+                    "detail": exc.detail,
+                }
+            },
+        )
 
-
-class UnauthorizedError(AppError):
-    status_code = HTTPStatus.UNAUTHORIZED
-    detail = "Authentication required."
-
-
-class ForbiddenError(AppError):
-    status_code = HTTPStatus.FORBIDDEN
-    detail = "You do not have permission to perform this action."
-
-
-class ConflictError(AppError):
-    status_code = HTTPStatus.CONFLICT
-    detail = "Resource already exists."
-
-
-class UnprocessableError(AppError):
-    status_code = HTTPStatus.UNPROCESSABLE_ENTITY
-    detail = "Unprocessable input."
-
-
-class ServiceUnavailableError(AppError):
-    status_code = HTTPStatus.SERVICE_UNAVAILABLE
-    detail = "Downstream service is unavailable."
+    @app.exception_handler(Exception)
+    async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        logger.exception("Unhandled exception: %s", exc)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "An unexpected error occurred.",
+                    "detail": None,
+                }
+            },
+        )
