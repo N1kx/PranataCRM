@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.auth.models import RefreshToken, Tenant, User
-from app.modules.licensing.models import App, AppSeat, AppSubscription, Role, UserRole
+from app.modules.auth.models import RefreshToken, Role, Tenant, User, UserRole
+from app.modules.licensing.models import App, AppSeat, AppSubscription
 from app.shared.types import BillingPlan, SeatStatus, SuiteRole, SubscriptionStatus
 
 
