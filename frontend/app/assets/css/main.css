@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fix browser autofill overriding input background/color */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+  -webkit-text-fill-color: #27252c !important;
+  caret-color: #27252c;
+}
+
+/* Prevent dark mode from inverting input colors */
+input, select, textarea {
+  color-scheme: light;
+}

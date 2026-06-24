@@ -1,0 +1,132 @@
+{
+  "auth": {
+    "login": {
+      "eyebrow": "Welcome back",
+      "title": "Sign in to your account",
+      "subtitle": "Continue to your team workspace.",
+      "workspace": "Workspace address",
+      "email": "Work email",
+      "password": "Password",
+      "forgot": "Forgot password?",
+      "submit": "Sign in ->",
+      "submitting": "Signing in...",
+      "no_account": "Want to create a new organization?",
+      "register_link": "Sign up free",
+      "registered_success": "Registration successful! Sign in to your workspace",
+      "aside_eyebrow": "Order for sales teams",
+      "aside_headline": "A tidy pipeline. Timely follow-ups. AI-supported decisions.",
+      "aside_body": "Manage contacts, deals, and customer communication in one calm, structured place.",
+      "aside_stat1_v": "4 AI agents",
+      "aside_stat1_l": "scoring, follow-up, summary, chat",
+      "aside_stat2_v": "Secure",
+      "aside_stat2_l": "per-tenant data isolation"
+    },
+    "register": {
+      "title_step1": "Create your admin account",
+      "title_step2": "Create your organization",
+      "title_step3": "Plan & seats",
+      "subtitle_step2": "You'll be the owner (super user) of this workspace. You can add team members afterward.",
+      "step1": "Admin account",
+      "step2": "Organization",
+      "step3": "Plan & seats",
+      "full_name": "Full name",
+      "email": "Work email",
+      "password": "Password",
+      "organization_name": "Organization name",
+      "slug": "Workspace address",
+      "slug_available": "available",
+      "slug_taken": "already taken",
+      "slug_hint": "Lowercase letters, numbers, and hyphens only",
+      "industry": "Industry",
+      "team_size": "Team size",
+      "submit": "Continue ->",
+      "submitting": "Creating...",
+      "back": "<- Back",
+      "have_account": "Already have an account?",
+      "login_link": "Sign in"
+    },
+    "invite": {
+      "title": "Accept invitation",
+      "subtitle": "Create your account to join",
+      "email_locked": "Email (from invitation)",
+      "full_name": "Full name",
+      "password": "Password",
+      "submit": "Create account",
+      "submitting": "Creating account..."
+    },
+    "logout": "Sign out"
+  },
+  "dashboard": {
+    "greeting": "Good morning",
+    "period": {
+      "today": "Today",
+      "month": "This month",
+      "quarter": "Quarter"
+    },
+    "kpi": {
+      "revenue": "Revenue (won)",
+      "active_deals": "Active deals",
+      "win_rate": "Win rate",
+      "aging_leads": "Aging leads"
+    },
+    "pipeline": "Pipeline",
+    "activity": "Recent activity"
+  },
+  "nav": {
+    "workspace": "Workspace",
+    "dashboard": "Dashboard",
+    "contacts": "Contacts",
+    "companies": "Companies",
+    "deals": "Deals",
+    "activities": "Activities",
+    "intelligence": "Intelligence",
+    "ai_insights": "AI Insights",
+    "follow_up": "Follow-up",
+    "reporting": "Reporting & KPI",
+    "settings": "Settings",
+    "team": "Team & Seats",
+    "roles": "Roles & Access",
+    "billing": "Billing"
+  },
+  "team": {
+    "title": "Team & Seats",
+    "add_member": "Add member",
+    "invite_member": "Invite member",
+    "create_tab": "Create directly",
+    "invite_tab": "Send invitation",
+    "full_name": "Full name",
+    "email": "Email",
+    "password": "Password",
+    "role": "Role",
+    "submit_create": "Add member",
+    "submit_invite": "Send invitation",
+    "submitting": "Processing...",
+    "seat_full": "Seats full - add seats in Billing.",
+    "member_added": "Member added successfully.",
+    "invite_sent": "Invitation sent successfully."
+  },
+  "error": {
+    "AUTH_INVALID_CREDENTIALS": "Incorrect email or password.",
+    "AUTH_TENANT_NOT_FOUND": "Workspace not found.",
+    "AUTH_SLUG_TAKEN": "Workspace address already taken.",
+    "AUTH_EMAIL_EXISTS": "Email already registered in this organization.",
+    "AUTH_SEAT_LIMIT": "Seat quota full. Add seats in Billing.",
+    "AUTH_INVITE_INVALID": "Invitation is invalid or has expired.",
+    "AUTH_PERMISSION_DENIED": "You don't have permission for this action.",
+    "AUTH_NOT_AUTHENTICATED": "Your session has ended. Please sign in again.",
+    "INTERNAL_ERROR": "An error occurred. Please try again.",
+    "unknown": "An unexpected error occurred."
+  },
+  "common": {
+    "loading": "Loading...",
+    "empty": "No data yet",
+    "error_state": "Failed to load data",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "lang": {
+    "id": "Indonesia",
+    "en": "English"
+  }
+}
