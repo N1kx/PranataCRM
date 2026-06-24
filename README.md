@@ -1,6 +1,6 @@
 # Pranata CRM
 
-A modular-monolith CRM built with FastAPI (backend) and Nuxt 3 (frontend) in a single repository.
+A modular-monolith CRM built with FastAPI (backend) and Nuxt 4 (frontend) in a single repository.
 
 ## Repository Layout
 
@@ -15,7 +15,11 @@ pranata-crm/
 │   ├── requirements.txt
 │   └── run.py     ← Windows-compatible server entrypoint
 ├── docker-compose.yml
-└── frontend/      ← Nuxt 3 + Tailwind + Pinia (coming soon)
+└── frontend/      ← Nuxt 4 + Nuxt UI + Pinia + i18n
+    ├── app/       ← Pages, components, composables, stores, layouts
+    ├── i18n/      ← Locale files (id / en)
+    ├── public/    ← Static assets (favicon, robots.txt)
+    └── Dockerfile
 ```
 
 ## Backend Stack
@@ -33,6 +37,17 @@ pranata-crm/
 | Password   | passlib + bcrypt                                          |
 | Email      | Resend / SMTP                                             |
 | AI         | LiteLLM (Ollama dev / Groq prod / OpenRouter fallback)    |
+
+## Frontend Stack
+
+| Area       | Choice                                  |
+| ---------- | --------------------------------------- |
+| Framework  | Nuxt 4 (Vue 3, SSR + SPA for `/app/**`) |
+| UI         | Nuxt UI + Tailwind CSS                  |
+| State      | Pinia                                   |
+| i18n       | @nuxtjs/i18n (Indonesia / English)      |
+| Validation | Zod                                     |
+| Auth       | httpOnly cookies (no token in JS)       |
 
 ---
 
@@ -75,11 +90,7 @@ curl http://localhost:8230/health
 
 > The API is exposed on port **8230** (mapped from container port 8000).
 
-### 4. Interactive API docs
-
-Open <http://localhost:8230/docs> in your browser.
-
-### 5. Stop
+### 4. Stop
 
 ```bash
 docker compose down
@@ -127,7 +138,63 @@ $env:APP_ENV        = "development"
 .venv\Scripts\python.exe run.py
 ```
 
-API available at <http://localhost:8000> — docs at <http://localhost:8000/docs>
+API available at <http://localhost:8000>
+
+---
+
+## Running the Frontend
+
+The frontend is a Nuxt 4 app. For day-to-day development run it locally (fast HMR);
+use Docker only for demos / sharing with others.
+
+### Option A — Local dev (recommended)
+
+Make sure the backend + infra are already running (see sections above).
+
+```bash
+cd frontend
+npm install      # first time only
+npm run dev
+```
+
+App available at <http://localhost:3000> (Nuxt picks the next free port if 3000 is taken).
+
+- Login: <http://localhost:3000/login>
+- Register: <http://localhost:3000/register>
+
+The dev server talks to the backend at `http://localhost:8230/api/v1`. Override with an
+`.env` file in `frontend/` if needed:
+
+```dotenv
+NUXT_PUBLIC_API_BASE=http://localhost:8230/api/v1
+NUXT_PUBLIC_APP_ENV=development
+```
+
+> In development the workspace tenant is resolved from the **workspace address** field
+> on the login form (sent as the `X-Tenant-Slug` header). In production it comes from the
+> subdomain (`acme.pranata.app`).
+
+### Option B — Full stack via Docker (demo)
+
+`docker-compose.yml` includes a `web` service that builds and serves the frontend.
+
+```bash
+docker compose up --build
+```
+
+This brings up everything (db, redis, rabbitmq, api, web). Open <http://localhost:3000>.
+
+To point the build at a remote backend (e.g. demo server), pass the API base at build time:
+
+```bash
+docker compose build --build-arg NUXT_PUBLIC_API_BASE=http://your-server:8230/api/v1 web
+docker compose up
+```
+
+### Language
+
+The UI ships in **Indonesia** and **English**. Switch via the language dropdown in the
+top-right corner of the auth pages. The choice is persisted in a cookie.
 
 ---
 

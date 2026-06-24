@@ -74,6 +74,21 @@ services:
       timeout: 5s
       retries: 5
 
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NUXT_PUBLIC_API_BASE: http://localhost:8230/api/v1
+        NUXT_PUBLIC_APP_ENV: production
+    container_name: pranata_web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
 volumes:
   pg_data:
   redis_data:

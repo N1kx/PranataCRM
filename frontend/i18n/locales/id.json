@@ -1,0 +1,132 @@
+{
+  "auth": {
+    "login": {
+      "eyebrow": "Selamat datang kembali",
+      "title": "Masuk ke akun Anda",
+      "subtitle": "Lanjutkan ke workspace tim Anda.",
+      "workspace": "Alamat workspace",
+      "email": "Email kerja",
+      "password": "Kata sandi",
+      "forgot": "Lupa kata sandi?",
+      "submit": "Masuk ->",
+      "submitting": "Sedang masuk...",
+      "no_account": "Ingin membuat organisasi baru?",
+      "register_link": "Daftar gratis",
+      "registered_success": "Pendaftaran berhasil! Masuk ke workspace Anda",
+      "aside_eyebrow": "Keteraturan untuk tim sales",
+      "aside_headline": "Pipeline yang rapi. Follow-up tepat waktu. Keputusan berbasis AI.",
+      "aside_body": "Kelola kontak, deal, dan komunikasi pelanggan dalam satu tempat yang terstruktur.",
+      "aside_stat1_v": "4 AI agents",
+      "aside_stat1_l": "skoring, follow-up, ringkasan, chat",
+      "aside_stat2_v": "Aman",
+      "aside_stat2_l": "isolasi data per tenant"
+    },
+    "register": {
+      "title_step1": "Buat akun admin Anda",
+      "title_step2": "Buat organisasi Anda",
+      "title_step3": "Paket & seat",
+      "subtitle_step2": "Anda akan menjadi pemilik (super user) workspace ini. Anggota tim bisa ditambahkan setelahnya.",
+      "step1": "Akun admin",
+      "step2": "Organisasi",
+      "step3": "Paket & seat",
+      "full_name": "Nama lengkap",
+      "email": "Email kerja",
+      "password": "Kata sandi",
+      "organization_name": "Nama organisasi",
+      "slug": "Alamat workspace",
+      "slug_available": "tersedia",
+      "slug_taken": "sudah dipakai",
+      "slug_hint": "Hanya huruf kecil, angka, dan tanda hubung",
+      "industry": "Industri",
+      "team_size": "Ukuran tim",
+      "submit": "Lanjutkan ->",
+      "submitting": "Mendaftarkan...",
+      "back": "<- Kembali",
+      "have_account": "Sudah punya akun?",
+      "login_link": "Masuk"
+    },
+    "invite": {
+      "title": "Terima undangan",
+      "subtitle": "Buat akun Anda untuk bergabung",
+      "email_locked": "Email (dari undangan)",
+      "full_name": "Nama lengkap",
+      "password": "Kata sandi",
+      "submit": "Buat akun",
+      "submitting": "Membuat akun..."
+    },
+    "logout": "Keluar"
+  },
+  "dashboard": {
+    "greeting": "Selamat pagi",
+    "period": {
+      "today": "Hari ini",
+      "month": "Bulan ini",
+      "quarter": "Kuartal ini"
+    },
+    "kpi": {
+      "revenue": "Pendapatan (won)",
+      "active_deals": "Deal aktif",
+      "win_rate": "Win rate",
+      "aging_leads": "Lead lama"
+    },
+    "pipeline": "Pipeline",
+    "activity": "Aktivitas terbaru"
+  },
+  "nav": {
+    "workspace": "Workspace",
+    "dashboard": "Dashboard",
+    "contacts": "Kontak",
+    "companies": "Perusahaan",
+    "deals": "Deal",
+    "activities": "Aktivitas",
+    "intelligence": "Intelligence",
+    "ai_insights": "AI Insights",
+    "follow_up": "Follow-up",
+    "reporting": "Reporting & KPI",
+    "settings": "Pengaturan",
+    "team": "Tim & Seat",
+    "roles": "Role & Akses",
+    "billing": "Billing"
+  },
+  "team": {
+    "title": "Tim & Seat",
+    "add_member": "Tambah member",
+    "invite_member": "Undang member",
+    "create_tab": "Buat langsung",
+    "invite_tab": "Kirim undangan",
+    "full_name": "Nama lengkap",
+    "email": "Email",
+    "password": "Kata sandi",
+    "role": "Role",
+    "submit_create": "Tambah member",
+    "submit_invite": "Kirim undangan",
+    "submitting": "Memproses...",
+    "seat_full": "Seat penuh - tambah seat di Billing.",
+    "member_added": "Member berhasil ditambahkan.",
+    "invite_sent": "Undangan berhasil dikirim."
+  },
+  "error": {
+    "AUTH_INVALID_CREDENTIALS": "Email atau kata sandi salah.",
+    "AUTH_TENANT_NOT_FOUND": "Workspace tidak ditemukan.",
+    "AUTH_SLUG_TAKEN": "Alamat workspace sudah dipakai.",
+    "AUTH_EMAIL_EXISTS": "Email sudah terdaftar di organisasi ini.",
+    "AUTH_SEAT_LIMIT": "Kuota seat penuh. Tambah seat di Billing.",
+    "AUTH_INVITE_INVALID": "Undangan tidak valid atau sudah kedaluwarsa.",
+    "AUTH_PERMISSION_DENIED": "Anda tidak punya izin untuk aksi ini.",
+    "AUTH_NOT_AUTHENTICATED": "Sesi Anda telah berakhir. Silakan masuk kembali.",
+    "INTERNAL_ERROR": "Terjadi kesalahan. Silakan coba lagi.",
+    "unknown": "Terjadi kesalahan tak terduga."
+  },
+  "common": {
+    "loading": "Memuat...",
+    "empty": "Belum ada data",
+    "error_state": "Gagal memuat data",
+    "retry": "Coba lagi",
+    "cancel": "Batal",
+    "save": "Simpan"
+  },
+  "lang": {
+    "id": "Indonesia",
+    "en": "English"
+  }
+}
