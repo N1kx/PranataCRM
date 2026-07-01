@@ -13,7 +13,7 @@ export class ApiRequestError extends Error {
 
 export function useApiClient() {
   const config = useRuntimeConfig()
-  const { locale } = useI18n()
+  const nuxtApp = useNuxtApp()
 
   function tenantSlug(): string | undefined {
     if (config.public.appEnv === 'development') {
@@ -29,7 +29,7 @@ export function useApiClient() {
   ): Promise<T> {
     const slug = tenantSlug()
     const headers: Record<string, string> = {
-      'Accept-Language': locale.value,
+      'Accept-Language': nuxtApp.$i18n.locale.value,
       ...(slug ? { 'X-Tenant-Slug': slug } : {}),
       ...(options.headers as Record<string, string> || {}),
     }

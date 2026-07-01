@@ -120,7 +120,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 
-definePageMeta({ layout: 'app' })
+definePageMeta({ layout: 'app', middleware: 'auth' })
 
 const { t } = useI18n()
 const { createUser, inviteUser, isOwnerOrAdmin } = useAuth()

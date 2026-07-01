@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
@@ -110,3 +111,13 @@ class RegisterTenantResponse(BaseModel):
 
 class InviteSentResponse(BaseModel):
     message: str = "Invitation sent successfully."
+
+
+class MeResponse(BaseModel):
+    id: str
+    email: str
+    full_name: str
+    suite_role: str
+    tenant_id: str
+    is_active: bool
+    created_at: datetime

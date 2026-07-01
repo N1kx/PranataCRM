@@ -24,11 +24,11 @@
           {{ t('nav.workspace') }}
         </p>
         <ul class="space-y-0.5">
-          <NavItem to="/app" :label="t('nav.dashboard')" icon="i-lucide-layout-dashboard" exact />
-          <NavItem to="/app/contacts" :label="t('nav.contacts')" icon="i-lucide-users" />
-          <NavItem to="/app/companies" :label="t('nav.companies')" icon="i-lucide-building-2" />
-          <NavItem to="/app/deals" :label="t('nav.deals')" icon="i-lucide-handshake" />
-          <NavItem to="/app/activities" :label="t('nav.activities')" icon="i-lucide-calendar-check" />
+          <AppNavItem to="/app" :label="t('nav.dashboard')" icon="i-lucide-layout-dashboard" exact />
+          <AppNavItem to="/app/contacts" :label="t('nav.contacts')" icon="i-lucide-users" />
+          <AppNavItem to="/app/companies" :label="t('nav.companies')" icon="i-lucide-building-2" />
+          <AppNavItem to="/app/deals" :label="t('nav.deals')" icon="i-lucide-handshake" />
+          <AppNavItem to="/app/activities" :label="t('nav.activities')" icon="i-lucide-calendar-check" />
         </ul>
       </div>
 
@@ -38,10 +38,10 @@
           {{ t('nav.intelligence') }}
         </p>
         <ul class="space-y-0.5">
-          <NavItem to="/app/ai" :label="t('nav.ai_insights')" icon="i-lucide-sparkles" />
-          <NavItem to="/app/follow-up" :label="t('nav.follow_up')" icon="i-lucide-bell" />
+          <AppNavItem to="/app/ai" :label="t('nav.ai_insights')" icon="i-lucide-sparkles" />
+          <AppNavItem to="/app/follow-up" :label="t('nav.follow_up')" icon="i-lucide-bell" />
           <!-- TODO: load effective permissions (usePermission().can('crm.reporting.view')) -->
-          <NavItem to="/app/reporting" :label="t('nav.reporting')" icon="i-lucide-bar-chart-2" />
+          <AppNavItem to="/app/reporting" :label="t('nav.reporting')" icon="i-lucide-bar-chart-2" />
         </ul>
       </div>
 
@@ -51,9 +51,9 @@
           {{ t('nav.settings') }}
         </p>
         <ul class="space-y-0.5">
-          <NavItem to="/app/settings/team" :label="t('nav.team')" icon="i-lucide-users-round" />
-          <NavItem to="/app/settings/roles" :label="t('nav.roles')" icon="i-lucide-shield-check" />
-          <NavItem to="/app/settings/billing" :label="t('nav.billing')" icon="i-lucide-credit-card" />
+          <AppNavItem to="/app/settings/team" :label="t('nav.team')" icon="i-lucide-users-round" />
+          <AppNavItem to="/app/settings/roles" :label="t('nav.roles')" icon="i-lucide-shield-check" />
+          <AppNavItem to="/app/settings/billing" :label="t('nav.billing')" icon="i-lucide-credit-card" />
         </ul>
       </div>
     </nav>

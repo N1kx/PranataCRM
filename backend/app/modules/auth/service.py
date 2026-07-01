@@ -8,6 +8,7 @@ from app.config import get_settings
 from app.modules.auth.exceptions import (
     EmailAlreadyExists,
     InvalidCredentials,
+    NotAuthenticated,
     PermissionDenied,
     SeatLimitReached,
     SlugAlreadyTaken,
@@ -21,6 +22,7 @@ from app.modules.auth.schemas import (
     CreateUserRequest,
     InviteUserRequest,
     LoginRequest,
+    MeResponse,
     RegisterTenantRequest,
     RegisterTenantResponse,
 )
@@ -282,6 +284,20 @@ class AuthService:
     async def logout(self, refresh_token: str | None) -> None:
         if refresh_token:
             await self._repo.revoke_refresh_token(refresh_token)
+
+    async def get_me(self, user_id: uuid.UUID) -> MeResponse:
+        user = await self._repo.get_user_by_id(user_id)
+        if user is None or not user.is_active:
+            raise NotAuthenticated()
+        return MeResponse(
+            id=str(user.id),
+            email=user.email,
+            full_name=user.full_name,
+            suite_role=user.suite_role,
+            tenant_id=str(user.tenant_id),
+            is_active=user.is_active,
+            created_at=user.created_at,
+        )
 
     async def get_current_user_from_token(
         self, access_token: str
