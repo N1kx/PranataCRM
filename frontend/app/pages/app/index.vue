@@ -139,7 +139,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'app' })
+definePageMeta({ layout: 'app', middleware: 'auth' })
 
 const { t } = useI18n()
 const { user } = useAuth()

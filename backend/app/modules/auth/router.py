@@ -13,6 +13,7 @@ from app.modules.auth.schemas import (
     InviteUserRequest,
     InviteSentResponse,
     LoginRequest,
+    MeResponse,
     RegisterTenantRequest,
     RegisterTenantResponse,
 )
@@ -72,12 +73,8 @@ async def get_current_user(
     if claims is None or claims.get("type") != "access":
         raise NotAuthenticated()
 
-    from sqlalchemy import select
-    from app.modules.auth.models import User
-    result = await session.execute(
-        select(User).where(User.id == uuid.UUID(claims["sub"]))
-    )
-    user = result.scalar_one_or_none()
+    repo = AuthRepository(session)
+    user = await repo.get_user_by_id(uuid.UUID(claims["sub"]))
     if user is None or not user.is_active:
         raise NotAuthenticated()
 
@@ -148,6 +145,15 @@ async def logout(
     response.delete_cookie("access_token", path="/")
     response.delete_cookie("refresh_token", path="/")
     return {"message": "Signed out successfully."}
+
+
+@router.get("/me", response_model=MeResponse)
+async def me(
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> MeResponse:
+    service = AuthService(AuthRepository(session))
+    return await service.get_me(current_user.user_id)
 
 
 @router.post("/accept-invite", response_model=AuthUserResponse, status_code=201)

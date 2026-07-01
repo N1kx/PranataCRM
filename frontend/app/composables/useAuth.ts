@@ -52,10 +52,17 @@ export function useAuth() {
     await api.post('/users/invite', payload)
   }
 
-  // TODO: implement restoreSession() using GET /auth/me when endpoint is available
-  function restoreSession(): boolean {
+  async function restoreSession(): Promise<boolean> {
     store.restoreSlug()
-    return !!store.user
+    try {
+      const user = await api.get<AuthUser>('/auth/me')
+      store.setUser(user)
+      return true
+    }
+    catch {
+      store.clear()
+      return false
+    }
   }
 
   return {
