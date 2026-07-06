@@ -25,16 +25,30 @@ def _module_name(request: Request) -> str:
     return "unknown"
 
 
-def _endpoint(request: Request) -> str:
-    return f"{request.method} {request.url.path}"
-
-
 def _request_id(request: Request) -> str | None:
     return getattr(request.state, "request_id", None)
 
 
-def _user_id(request: Request) -> str | None:
-    return getattr(request.state, "user_id", None)
+def _log_fields(request: Request) -> dict:
+    return {
+        "request_id": _request_id(request),
+        "user_id": getattr(request.state, "user_id", None),
+        "module_name": _module_name(request),
+        "endpoint": f"{request.method} {request.url.path}",
+    }
+
+
+def _error_response(
+    request: Request, status_code: int, code: str, message: str, detail: str | None
+) -> JSONResponse:
+    response = JSONResponse(
+        status_code=status_code,
+        content={"error": {"code": code, "message": message, "detail": detail}},
+    )
+    request_id = _request_id(request)
+    if request_id:
+        response.headers["X-Request-ID"] = request_id
+    return response
 
 
 def register_exception_handlers(app: FastAPI) -> None:
@@ -43,50 +57,20 @@ def register_exception_handlers(app: FastAPI) -> None:
         log = logger.warning if exc.status_code < 500 else logger.error
         log(
             "app_exception",
-            request_id=_request_id(request),
-            user_id=_user_id(request),
-            module_name=_module_name(request),
-            endpoint=_endpoint(request),
+            **_log_fields(request),
             error_details=f"{type(exc).__name__}: {exc.message}"
             + (f" ({exc.detail})" if exc.detail else ""),
         )
-        response = JSONResponse(
-            status_code=exc.status_code,
-            content={
-                "error": {
-                    "code": exc.error_code,
-                    "message": exc.message,
-                    "detail": exc.detail,
-                }
-            },
-        )
-        request_id = _request_id(request)
-        if request_id:
-            response.headers["X-Request-ID"] = request_id
-        return response
+        return _error_response(request, exc.status_code, exc.error_code, exc.message, exc.detail)
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         logger.error(
             "unhandled_exception",
-            request_id=_request_id(request),
-            user_id=_user_id(request),
-            module_name=_module_name(request),
-            endpoint=_endpoint(request),
+            **_log_fields(request),
             error_details=f"{type(exc).__name__}: {exc}",
             exc_info=True,
         )
-        response = JSONResponse(
-            status_code=500,
-            content={
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": "An unexpected error occurred.",
-                    "detail": None,
-                }
-            },
+        return _error_response(
+            request, 500, "INTERNAL_ERROR", "An unexpected error occurred.", None
         )
-        request_id = _request_id(request)
-        if request_id:
-            response.headers["X-Request-ID"] = request_id
-        return response

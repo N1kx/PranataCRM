@@ -21,7 +21,7 @@ from app.modules.auth.service import AuthService
 from app.modules.auth.repository import AuthRepository
 from app.modules.auth.use_case import AuthUseCase
 from app.shared.jwt import decode_token
-from app.shared.logging import user_id_ctx
+from app.shared.logging import bind_user_id
 from app.shared.types import SuiteRole
 from app.config import get_settings
 
@@ -79,7 +79,7 @@ async def get_current_user(
     if user is None or not user.is_active:
         raise NotAuthenticated()
 
-    user_id_ctx.set(str(user.id))
+    bind_user_id(str(user.id))
     request.state.user_id = str(user.id)
 
     return CurrentUser(

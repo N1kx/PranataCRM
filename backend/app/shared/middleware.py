@@ -1,8 +1,7 @@
 import uuid
 
+import structlog
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
-
-from app.shared.logging import request_id_ctx, user_id_ctx
 
 
 class RequestIDMiddleware:
@@ -20,25 +19,23 @@ class RequestIDMiddleware:
         incoming = headers.get(b"x-request-id")
         request_id = incoming.decode("latin-1") if incoming else str(uuid.uuid4())
 
-        # Also stash on scope["state"] (-> request.state): Starlette dispatches the
-        # base Exception handler from ServerErrorMiddleware, which sits *outside*
-        # this middleware, so by the time it runs, the finally-block below has
-        # already reset these ContextVars. request.state survives that boundary.
+        # Also stash on scope["state"] (-> request.state): the handler for
+        # unhandled exceptions runs at ServerErrorMiddleware level, *outside*
+        # this middleware, and reads the id from there.
         scope.setdefault("state", {})["request_id"] = request_id
 
-        request_id_token = request_id_ctx.set(request_id)
-        user_id_token = user_id_ctx.set(None)
+        structlog.contextvars.clear_contextvars()
+        structlog.contextvars.bind_contextvars(request_id=request_id)
 
         async def send_with_request_id(message: Message) -> None:
             if message["type"] == "http.response.start":
-                message.setdefault("headers", [])
-                message["headers"].append(
-                    (b"x-request-id", request_id.encode("latin-1"))
-                )
+                response_headers = message.setdefault("headers", [])
+                # The exception handlers set this header on their own responses;
+                # only add it when it is not already present.
+                if not any(name.lower() == b"x-request-id" for name, _ in response_headers):
+                    response_headers.append(
+                        (b"x-request-id", request_id.encode("latin-1"))
+                    )
             await send(message)
 
-        try:
-            await self.app(scope, receive, send_with_request_id)
-        finally:
-            request_id_ctx.reset(request_id_token)
-            user_id_ctx.reset(user_id_token)
+        await self.app(scope, receive, send_with_request_id)

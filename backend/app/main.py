@@ -50,6 +50,9 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    # Let browser JS read the request id so the frontend can surface it in
+    # error messages for support/correlation.
+    expose_headers=["X-Request-ID"],
 )
 
 
