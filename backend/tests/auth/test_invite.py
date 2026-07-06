@@ -49,3 +49,24 @@ class InviteTests(AuthTestCase):
         })
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json()["error"]["code"], "AUTH_INVITE_INVALID")
+
+    async def test_accept_invite_token_missing_claims(self):
+        # A signature-valid invite token that lacks the required claims must be
+        # rejected as an invalid invite (400), not crash with a 500.
+        import jwt as _jwt
+        from datetime import datetime, timedelta, timezone
+        from app.config import get_settings
+        settings = get_settings()
+        now = datetime.now(timezone.utc)
+        token = _jwt.encode(
+            {"purpose": "invite", "iat": now, "exp": now + timedelta(days=1)},
+            settings.jwt_secret_key,
+            algorithm=settings.jwt_algorithm,
+        )
+        resp = await self.client.post("/api/v1/auth/accept-invite", json={
+            "token": token,
+            "full_name": "Bug Demo",
+            "password": "secret123",
+        })
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()["error"]["code"], "AUTH_INVITE_INVALID")

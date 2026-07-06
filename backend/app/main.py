@@ -7,7 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import engine
 from app.shared.exceptions import register_exception_handlers
+from app.shared.logging import configure_logging
+from app.shared.middleware import RequestIDMiddleware
 
+configure_logging()
 settings = get_settings()
 
 
@@ -29,11 +32,17 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
-    debug=settings.app_debug,
+    # Starlette's own debug mode renders a raw traceback response for unhandled
+    # exceptions and bypasses our Exception handler entirely, which breaks both
+    # the structured JSON logging and the { "error": {...} } envelope. Keep it
+    # off regardless of app_debug (which still controls SQL echo logging).
+    debug=False,
     lifespan=lifespan,
 )
 
 register_exception_handlers(app)
+
+app.add_middleware(RequestIDMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -41,6 +50,9 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    # Let browser JS read the request id so the frontend can surface it in
+    # error messages for support/correlation.
+    expose_headers=["X-Request-ID"],
 )
 
 

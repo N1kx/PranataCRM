@@ -27,7 +27,8 @@ RUN pip install --no-cache-dir \
     "httpx>=0.27.0" \
     "resend>=2.0.0" \
     "aiosmtplib>=3.0.0" \
-    "PyJWT>=2.8.0"
+    "PyJWT>=2.8.0" \
+    "structlog>=24.1.0"
 
 COPY . .
 

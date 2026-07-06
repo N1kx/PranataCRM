@@ -190,10 +190,13 @@ class AuthService:
         if claims is None or claims.get("purpose") != "invite":
             raise InviteInvalidOrExpired()
 
-        email: str = claims["email"]
-        role_id: str = claims["role_id"]
-        tenant_id = uuid.UUID(claims["tid"])
-        actor_id = uuid.UUID(claims["inv_by"])
+        try:
+            email: str = claims["email"]
+            role_id: str = claims["role_id"]
+            tenant_id = uuid.UUID(claims["tid"])
+            actor_id = uuid.UUID(claims["inv_by"])
+        except (KeyError, ValueError):
+            raise InviteInvalidOrExpired()
 
         if await self._repo.get_user_by_email(tenant_id, email):
             raise EmailAlreadyExists()
