@@ -306,6 +306,33 @@ Response `200`:
 
 ---
 
+### GET /auth/me
+
+Return the currently authenticated user's profile, resolved from the `access_token` cookie.
+Used by the frontend to restore the session after a page refresh.
+
+Response `200`:
+
+```json
+{
+  "id": "019ef67e-27e0-7174-bccb-d12bd921528e",
+  "email": "niko@nxcorp.co",
+  "full_name": "Niko Winoko",
+  "suite_role": "tenant_owner",
+  "tenant_id": "019ef67e-272d-7084-aec7-0eb4ce43719d",
+  "is_active": true,
+  "created_at": "2026-01-01T12:00:00Z"
+}
+```
+
+Error codes:
+
+| Code                     | HTTP | Meaning                              |
+| ------------------------ | ---- | ------------------------------------ |
+| `AUTH_NOT_AUTHENTICATED` | 401  | Missing, invalid, or expired session |
+
+---
+
 ### POST /auth/accept-invite
 
 Accept an invitation sent by a tenant admin. Creates the user account and assigns the role specified in the invite.
@@ -387,6 +414,100 @@ Response `200`:
 ```json
 { "message": "Invitation sent successfully." }
 ```
+
+---
+
+## Contacts API Endpoints
+
+Base URL: `/api/v1`. All endpoints require authentication (`access_token` cookie) and are
+scoped to the caller's tenant — a contact belonging to another tenant looks like `404`, never
+`403`, so tenant existence is never leaked.
+
+### POST /contacts
+
+Create a contact. Only `first_name` is required.
+
+Request body:
+
+```json
+{
+  "first_name": "Ada",
+  "last_name": "Lovelace",
+  "email": "ada@example.com",
+  "status": "lead"
+}
+```
+
+Response `201`: the created contact (see field list under `GET /contacts/{id}` below).
+
+Validation error (`422`) examples:
+
+- `first_name` empty or over 100 characters
+- `status` not one of `lead, qualified, customer, churned`
+- `lifecycle_stage` not one of `subscriber, lead, mql, sql, opportunity, customer, evangelist`
+- `preferred_contact_method` not one of `email, phone, sms, whatsapp`
+- `owner_id` / `company_id` not a valid UUID
+
+### GET /contacts
+
+List the caller's tenant's contacts, paginated.
+
+Query params: `page` (default `1`), `page_size` (default `20`, capped at `100`).
+
+Response `200`:
+
+```json
+{
+  "items": [ { "id": "...", "first_name": "Ada", "...": "..." } ],
+  "total": 1,
+  "page": 1,
+  "page_size": 20
+}
+```
+
+### GET /contacts/{contact_id}
+
+Get a single contact. Response `200` fields: `id`, `tenant_id`, `owner_id`, `company_id`,
+`first_name`, `last_name`, `email`, `secondary_email`, `phone`, `mobile_phone`, `job_title`,
+`department`, `status`, `lifecycle_stage`, `lead_source`, `linkedin_url`, `twitter_handle`,
+`address_line1`, `city`, `state`, `postal_code`, `country`, `timezone`,
+`preferred_contact_method`, `preferred_language`, `do_not_contact`, `description`, `tags`,
+`custom_fields`, `created_at`, `updated_at`.
+
+### PATCH /contacts/{contact_id}
+
+Partial update — send only the fields you want to change.
+
+### DELETE /contacts/{contact_id}
+
+Response `200`:
+
+```json
+{ "message": "Contact deleted successfully." }
+```
+
+### Error codes (all Contacts endpoints)
+
+| Code                     | HTTP | Meaning                                        |
+| ------------------------ | ---- | ---------------------------------------------- |
+| `AUTH_NOT_AUTHENTICATED` | 401  | Missing, invalid, or expired session           |
+| `CONTACT_NOT_FOUND`      | 404  | No contact with that id in the caller's tenant |
+
+---
+
+## Testing the API with Postman
+
+A ready-to-import Postman collection lives in [`postman/`](postman/):
+
+- `PranataCRM.postman_collection.json` — every endpoint above, organized into
+  Auth / Users / Contacts / Cleanup & Extras folders.
+- `PranataCRM.postman_environment.json` — the `PranataCRM Local` environment.
+
+Auth cookies, the dev-mode `X-Tenant-Slug` header, and IDs produced along the way
+(`tenant_id`, `user_id`, `contact_id`) are captured and re-injected automatically by the
+collection's scripts — no manual copy-pasting of tokens or headers. See
+[`postman/README.md`](postman/README.md) for the full run order and how to run it headlessly
+via Newman.
 
 ---
 

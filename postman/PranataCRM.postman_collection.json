@@ -1,0 +1,495 @@
+{
+  "info": {
+    "_postman_id": "d3f2b1a0-5a4a-4a1a-9c0a-1a2b3c4d5e6f",
+    "name": "PranataCRM API",
+    "description": "Auth + Users + Contacts endpoints for PranataCRM.\n\nUse the \"PranataCRM Local\" environment alongside this collection. Auth cookies (access_token/refresh_token), the dev-mode X-Tenant-Slug header, and IDs produced along the way (tenant_id, user_id, contact_id) are captured and re-injected automatically by the collection's pre-request/test scripts — no manual copy-paste needed.\n\nSuggested run order: Register Tenant -> Login -> (everything else). Re-running \"Register Tenant\" always creates a brand-new tenant/user (unique slug/email per run), so the whole collection can be run repeatedly (including via Newman/CI) without 409 conflicts.\n\nTwo requests need one manual value because the backend has no endpoint to list them yet:\n- Create User / Invite User need `role_id` (a Role UUID). Look one up in the `roles` table for your tenant (the tenant's \"Administrator\" role is auto-created on registration) and set the `role_id` environment variable.\n- Accept Invite needs `invite_token` (the JWT emailed to the invitee). Paste it from the email/logs into the `invite_token` environment variable.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-inject the dev-mode tenant slug header and auth cookies on every",
+          "// request in this collection, so nothing needs to be copy-pasted by hand.",
+          "const tenantSlug = pm.environment.get('tenant_slug');",
+          "if (tenantSlug) {",
+          "    pm.request.headers.upsert({ key: 'X-Tenant-Slug', value: tenantSlug });",
+          "}",
+          "",
+          "const accessToken = pm.environment.get('access_token');",
+          "const refreshToken = pm.environment.get('refresh_token');",
+          "const cookieParts = [];",
+          "if (accessToken) cookieParts.push('access_token=' + accessToken);",
+          "if (refreshToken) cookieParts.push('refresh_token=' + refreshToken);",
+          "if (cookieParts.length) {",
+          "    pm.request.headers.upsert({ key: 'Cookie', value: cookieParts.join('; ') });",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Capture Set-Cookie (access_token/refresh_token) and X-Request-ID from",
+          "// every response so later requests stay authenticated automatically and",
+          "// failures are easy to correlate with a backend log line.",
+          "const setCookieHeaders = pm.response.headers.all().filter(function (h) {",
+          "    return h.key.toLowerCase() === 'set-cookie';",
+          "});",
+          "setCookieHeaders.forEach(function (h) {",
+          "    const match = h.value.match(/^(access_token|refresh_token)=([^;]+)/);",
+          "    if (match) {",
+          "        pm.environment.set(match[1], match[2]);",
+          "    }",
+          "});",
+          "",
+          "const requestId = pm.response.headers.get('X-Request-ID');",
+          "if (requestId) {",
+          "    pm.environment.set('last_request_id', requestId);",
+          "}",
+          "",
+          "pm.test('Status code is not 5xx (X-Request-ID: ' + requestId + ')', function () {",
+          "    pm.expect(pm.response.code).to.be.below(500);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api/v1" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register Tenant",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Generate a unique tenant slug + email every time this request runs,",
+                  "// so re-running it (or the whole collection) never collides with a",
+                  "// previous run's data (AUTH_SLUG_TAKEN / AUTH_EMAIL_EXISTS).",
+                  "const runSuffix = Date.now();",
+                  "pm.environment.set('tenant_slug', 'postman-' + runSuffix);",
+                  "pm.environment.set('test_email', 'postman+' + runSuffix + '@example.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Tenant registered', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.environment.set('tenant_id', body.tenant_id);",
+                  "    pm.environment.set('user_id', body.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"{{test_full_name}}\",\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"organization_name\": \"{{organization_name}}\",\n  \"slug\": \"{{tenant_slug}}\",\n  \"industry\": \"{{industry}}\",\n  \"team_size\": \"{{team_size}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register-tenant",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register-tenant"]
+            },
+            "description": "Creates a brand-new tenant + owner user. Does NOT log in automatically. Run Login next."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login succeeded', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.environment.set('user_id', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Uses the dev-mode X-Tenant-Slug header (auto-injected from the tenant_slug variable) instead of a real subdomain. On success, access_token/refresh_token cookies are captured automatically by the collection-level test script."
+          }
+        },
+        {
+          "name": "Get Me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns current user profile', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.have.property('email');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Session-restore endpoint — resolves the current user purely from the access_token cookie."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User (direct)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('User created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"{{invite_full_name}}\",\n  \"email\": \"{{invite_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"role_id\": \"{{role_id}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            },
+            "description": "Requires tenant_owner/tenant_admin (Login as the tenant owner first). MANUAL STEP: set the role_id environment variable to a Role UUID for this tenant (there is no roles-list endpoint yet)."
+          }
+        },
+        {
+          "name": "Invite User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invite sent', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{invite_email}}\",\n  \"full_name\": \"{{invite_full_name}}\",\n  \"role_id\": \"{{role_id}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/users/invite",
+              "host": ["{{base_url}}"],
+              "path": ["users", "invite"]
+            },
+            "description": "Requires tenant_owner/tenant_admin. Sends a real invite email via Resend (needs RESEND_API_KEY configured) containing the JWT used by Accept Invite. Also needs the role_id environment variable set."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Contacts",
+      "item": [
+        {
+          "name": "Create Contact",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Contact created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    pm.environment.set('contact_id', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Ada\",\n  \"last_name\": \"Lovelace\",\n  \"email\": \"ada.lovelace@example.com\",\n  \"status\": \"lead\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/contacts",
+              "host": ["{{base_url}}"],
+              "path": ["contacts"]
+            },
+            "description": "Requires login. The created contact's id is captured into the contact_id variable for the Get/Update/Delete requests below."
+          }
+        },
+        {
+          "name": "List Contacts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Lists contacts', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.have.property('items');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/contacts?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["contacts"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "20" }
+              ]
+            },
+            "description": "Paginated, tenant-scoped list. page_size is capped at 100 server-side."
+          }
+        },
+        {
+          "name": "Get Contact",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns the contact', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/contacts/{{contact_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["contacts", "{{contact_id}}"]
+            },
+            "description": "Uses contact_id captured from Create Contact. Returns 404 (not 403) if the contact belongs to another tenant."
+          }
+        },
+        {
+          "name": "Update Contact",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Contact updated', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"job_title\": \"Mathematician\",\n  \"status\": \"qualified\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/contacts/{{contact_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["contacts", "{{contact_id}}"]
+            },
+            "description": "Partial update — only send the fields you want to change."
+          }
+        },
+        {
+          "name": "Delete Contact",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Contact deleted', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.environment.set('contact_id', '');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/contacts/{{contact_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["contacts", "{{contact_id}}"]
+            },
+            "description": "Clears the contact_id variable on success."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cleanup & Extras",
+      "description": "Run these last (or standalone). Logout clears the session cookies, so anything placed after it in a full collection run would fail with 401 — that's why it lives here instead of inside Auth.",
+      "item": [
+        {
+          "name": "Accept Invite (manual token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const inviteToken = pm.environment.get('invite_token');",
+                  "if (!inviteToken) {",
+                  "    console.log('invite_token is empty — set it from the invite email/logs before running this request. Skipping the status assertion.');",
+                  "} else {",
+                  "    pm.test('Invite accepted', function () {",
+                  "        pm.response.to.have.status(201);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{invite_token}}\",\n  \"full_name\": \"{{invite_full_name}}\",\n  \"password\": \"{{test_password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/accept-invite",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "accept-invite"]
+            },
+            "description": "MANUAL STEP REQUIRED: set the invite_token environment variable to the JWT sent by the \"Invite User\" request's email (or read it from the backend logs) before running this. Without it, this intentionally returns 400 and the test is skipped rather than failed."
+          }
+        },
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Logout succeeded', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.environment.set('access_token', '');",
+                  "pm.environment.set('refresh_token', '');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Revokes the refresh token and clears the captured access_token/refresh_token variables. Placed last on purpose — run this only when you're done testing."
+          }
+        }
+      ]
+    }
+  ]
+}
