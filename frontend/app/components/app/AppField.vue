@@ -1,7 +1,8 @@
 <template>
-  <UFormField :label="label" :name="name" :hint="hint" :error="error">
+  <!-- Nuxt UI v2 component is UFormGroup (UFormField only exists in v3) -->
+  <UFormGroup :label="label" :name="name" :hint="hint" :error="error">
     <slot />
-  </UFormField>
+  </UFormGroup>
 </template>
 
 <script setup lang="ts">
