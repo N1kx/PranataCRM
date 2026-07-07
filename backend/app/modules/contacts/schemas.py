@@ -68,13 +68,10 @@ class _ContactFieldsMixin(BaseModel):
     @field_validator("email", "secondary_email", mode="before")
     @classmethod
     def _lowercase_email(cls, v: str | None) -> str | None:
+        # EmailStr already enforces the RFC 5321 254-char limit, which is within
+        # the DB column size (String(255)), so no explicit max_length is needed.
         trimmed = _trim(v)
-        if trimmed is None:
-            return None
-        trimmed = trimmed.lower()
-        if len(trimmed) > 255:
-            raise ValueError("email must be at most 255 characters.")
-        return trimmed
+        return trimmed.lower() if trimmed else None
 
     @field_validator("status", mode="before")
     @classmethod
