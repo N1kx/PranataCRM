@@ -30,7 +30,10 @@ class ContactRepository:
         items_result = await self._session.execute(
             select(Contact)
             .where(Contact.tenant_id == tenant_id)
-            .order_by(Contact.created_at.desc())
+            # id is a UUID v7 (time-ordered), so ordering by it is newest-first
+            # like created_at but with a deterministic tie-break, so pagination
+            # never skips/duplicates rows that share a created_at.
+            .order_by(Contact.id.desc())
             .limit(limit)
             .offset(offset)
         )

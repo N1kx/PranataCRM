@@ -1,6 +1,11 @@
 import uuid
 from typing import Protocol
 
+# Re-exported so other modules depend on auth's request dependency through the
+# contract layer instead of importing app.modules.auth internals directly.
+# Unlike AuthContractProtocol below, this is a concrete re-export because
+# FastAPI's Depends() needs a real callable, not a Protocol.
+from app.modules.auth.dependencies import CurrentUser, get_current_user
 from app.modules.auth.schemas import (
     AcceptInviteRequest,
     AuthUserResponse,
@@ -10,6 +15,12 @@ from app.modules.auth.schemas import (
     RegisterTenantRequest,
     RegisterTenantResponse,
 )
+
+__all__ = [
+    "AuthContractProtocol",
+    "CurrentUser",
+    "get_current_user",
+]
 
 
 class AuthContractProtocol(Protocol):

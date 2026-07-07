@@ -16,6 +16,19 @@ def _trim(v: str | None) -> str | None:
     return v or None
 
 
+def _reject_null(field_name: str, value):
+    """Reject an explicitly-sent ``null`` for a DB-non-nullable field.
+
+    In Pydantic v2 a field_validator does not run for omitted fields (defaults
+    are not validated), so this only fires when the client sends an explicit
+    ``null`` — turning a would-be 500 (NOT NULL violation / response crash)
+    into a clean 422.
+    """
+    if value is None:
+        raise ValueError(f"{field_name} may not be null.")
+    return value
+
+
 class _ContactFieldsMixin(BaseModel):
     last_name: str | None = Field(default=None, max_length=100)
     email: EmailStr | None = None
@@ -58,14 +71,22 @@ class _ContactFieldsMixin(BaseModel):
         trimmed = _trim(v)
         return trimmed.lower() if trimmed else None
 
-    @field_validator("status")
+    @field_validator("status", mode="before")
     @classmethod
-    def _validate_status(cls, v: str | None) -> str | None:
-        if v is not None and v not in _ALLOWED_STATUS:
+    def _validate_status(cls, v: str | None) -> str:
+        # status is NOT NULL in the DB — an explicit null must 422, not 500.
+        _reject_null("status", v)
+        if v not in _ALLOWED_STATUS:
             raise ValueError(
                 f"status must be one of: {', '.join(sorted(_ALLOWED_STATUS))}."
             )
         return v
+
+    @field_validator("tags", "custom_fields", mode="before")
+    @classmethod
+    def _reject_null_containers(cls, v, info):
+        # tags/custom_fields are NOT NULL in the DB — reject explicit null.
+        return _reject_null(info.field_name, v)
 
     @field_validator("lifecycle_stage")
     @classmethod
@@ -128,9 +149,10 @@ class ContactUpdate(_ContactFieldsMixin):
 
     @field_validator("first_name", mode="before")
     @classmethod
-    def _trim_first_name(cls, v: str | None) -> str | None:
-        if v is None:
-            return None
+    def _trim_first_name(cls, v: str | None) -> str:
+        # first_name is NOT NULL in the DB. Omitting it is fine (this validator
+        # does not run for unset fields), but an explicit null must 422.
+        _reject_null("first_name", v)
         v = v.strip() if isinstance(v, str) else v
         if not v:
             raise ValueError("first_name must be between 1 and 100 characters.")

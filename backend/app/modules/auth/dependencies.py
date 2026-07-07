@@ -29,8 +29,15 @@ async def get_current_user(
     if claims is None or claims.get("type") != "access":
         raise NotAuthenticated()
 
+    try:
+        user_id = uuid.UUID(claims["sub"])
+    except (KeyError, ValueError, TypeError):
+        # A signature-valid token missing/malforming the `sub` claim is still
+        # an invalid session — 401, not a 500.
+        raise NotAuthenticated()
+
     repo = AuthRepository(session)
-    user = await repo.get_user_by_id(uuid.UUID(claims["sub"]))
+    user = await repo.get_user_by_id(user_id)
     if user is None or not user.is_active:
         raise NotAuthenticated()
 

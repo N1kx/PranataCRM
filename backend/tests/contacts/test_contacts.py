@@ -59,7 +59,7 @@ class ContactsTests(ContactsTestCase):
 
     def _override_current_user(self):
         from app.main import app
-        from app.shared.auth_dependency import CurrentUser, get_current_user
+        from app.modules.auth.dependencies import CurrentUser, get_current_user
 
         async def _override():
             return CurrentUser(
@@ -70,7 +70,7 @@ class ContactsTests(ContactsTestCase):
         return app
 
     def _clear_override(self, app):
-        from app.shared.auth_dependency import get_current_user
+        from app.modules.auth.dependencies import get_current_user
         app.dependency_overrides.pop(get_current_user, None)
 
     # ── create ────────────────────────────────────────────────────────────────
@@ -116,6 +116,18 @@ class ContactsTests(ContactsTestCase):
     async def test_create_contact_without_auth_returns_401(self):
         resp = await self.client.post("/api/v1/contacts", json={"first_name": "Ada"})
         self.assertEqual(resp.status_code, 401)
+
+    async def test_create_contact_explicit_null_non_nullable_returns_422(self):
+        # An explicit null on a NOT NULL column must 422, not reach the DB / 500.
+        app = self._override_current_user()
+        try:
+            for field in ("status", "tags", "custom_fields"):
+                resp = await self.client.post(
+                    "/api/v1/contacts", json={"first_name": "Ada", field: None}
+                )
+                self.assertEqual(resp.status_code, 422, f"{field}=null should 422")
+        finally:
+            self._clear_override(app)
 
     # ── get ───────────────────────────────────────────────────────────────────
 
@@ -209,6 +221,17 @@ class ContactsTests(ContactsTestCase):
         self.assertEqual(update_data["job_title"], "Engineer")
         self.assertEqual(update_data["updated_by"], self._user_id)
         self.assertNotIn("first_name", update_data)
+
+    async def test_update_contact_explicit_null_first_name_returns_422(self):
+        # first_name is NOT NULL — an explicit null on update must 422, not 500.
+        app = self._override_current_user()
+        try:
+            resp = await self.client.patch(
+                f"/api/v1/contacts/{self._contact_id}", json={"first_name": None}
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
 
     @patch("app.modules.contacts.repository.ContactRepository.get_by_id", new_callable=AsyncMock)
     async def test_update_contact_not_found_returns_404(self, mock_get):

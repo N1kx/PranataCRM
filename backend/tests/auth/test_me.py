@@ -83,3 +83,21 @@ class MeTests(AuthTestCase):
         resp = await self.client.get("/api/v1/auth/me")
         self.assertEqual(resp.status_code, 401)
         self.assertEqual(resp.json()["error"]["code"], "AUTH_NOT_AUTHENTICATED")
+
+    async def test_me_token_missing_sub_claim_returns_401(self):
+        # A signature-valid access token without a usable `sub` claim must 401,
+        # not crash with a 500 when parsing the UUID.
+        import jwt as _jwt
+        from datetime import timedelta
+        from app.config import get_settings
+        settings = get_settings()
+        now = datetime.now(timezone.utc)
+        token = _jwt.encode(
+            {"type": "access", "iat": now, "exp": now + timedelta(minutes=5)},
+            settings.jwt_secret_key,
+            algorithm=settings.jwt_algorithm,
+        )
+        self.client.cookies.set("access_token", token)
+        resp = await self.client.get("/api/v1/auth/me")
+        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(resp.json()["error"]["code"], "AUTH_NOT_AUTHENTICATED")

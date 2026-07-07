@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db as get_session
-from app.modules.auth.exceptions import NotAuthenticated, PermissionDenied
+from app.modules.auth.dependencies import CurrentUser, get_current_user
+from app.modules.auth.exceptions import PermissionDenied
 from app.modules.auth.schemas import (
     AcceptInviteRequest,
     AuthUserResponse,
@@ -19,16 +20,15 @@ from app.modules.auth.schemas import (
 from app.modules.auth.service import AuthService
 from app.modules.auth.repository import AuthRepository
 from app.modules.auth.use_case import AuthUseCase
-from app.shared.auth_dependency import CurrentUser, get_current_user
 from app.shared.types import SuiteRole
 from app.config import get_settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 users_router = APIRouter(prefix="/users", tags=["users"])
 
-# Re-exported for backward compatibility — CurrentUser/get_current_user now
-# live in app.shared.auth_dependency so other modules (e.g. contacts) can
-# depend on them without importing from the auth module directly.
+# CurrentUser/get_current_user live in app.modules.auth.dependencies; they are
+# imported above for this module's own endpoints and re-exported here so the
+# existing tests that patch app.modules.auth.router.get_current_user keep working.
 __all__ = ["router", "users_router", "CurrentUser", "get_current_user"]
 
 

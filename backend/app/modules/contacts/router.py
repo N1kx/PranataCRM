@@ -13,7 +13,7 @@ from app.modules.contacts.schemas import (
     ContactUpdate,
 )
 from app.modules.contacts.service import ContactService
-from app.shared.auth_dependency import CurrentUser, get_current_user
+from app.shared.contracts.auth_contract import CurrentUser, get_current_user
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])
 
