@@ -57,5 +57,9 @@ export function useApiClient() {
       request<T>(path, { method: 'GET', ...opts }),
     post: <T>(path: string, body?: unknown, opts?: Parameters<typeof $fetch>[1]) =>
       request<T>(path, { method: 'POST', body, ...opts }),
+    patch: <T>(path: string, body?: unknown, opts?: Parameters<typeof $fetch>[1]) =>
+      request<T>(path, { method: 'PATCH', body, ...opts }),
+    del: <T>(path: string, opts?: Parameters<typeof $fetch>[1]) =>
+      request<T>(path, { method: 'DELETE', ...opts }),
   }
 }

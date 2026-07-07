@@ -105,7 +105,67 @@
     "member_added": "Member added successfully.",
     "invite_sent": "Invitation sent successfully."
   },
+  "contacts": {
+    "title": "Contacts",
+    "add": "Add contact",
+    "edit": "Edit contact",
+    "delete": "Delete",
+    "submitting": "Saving...",
+    "created": "Contact created successfully.",
+    "saved": "Contact updated successfully.",
+    "deleted": "Contact deleted successfully.",
+    "confirm_delete_title": "Delete contact",
+    "confirm_delete_body": "Contact {name} will be permanently deleted. Continue?",
+    "table": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "job_title": "Job title",
+      "status": "Status"
+    },
+    "fields": {
+      "first_name": "First name",
+      "last_name": "Last name",
+      "email": "Email",
+      "phone": "Phone",
+      "mobile_phone": "Mobile phone",
+      "job_title": "Job title",
+      "department": "Department",
+      "status": "Status",
+      "lifecycle_stage": "Lifecycle stage",
+      "lead_source": "Lead source",
+      "city": "City",
+      "country": "Country",
+      "description": "Description"
+    },
+    "status": {
+      "lead": "Lead",
+      "qualified": "Qualified",
+      "customer": "Customer",
+      "churned": "Churned"
+    },
+    "lifecycle": {
+      "none": "-",
+      "subscriber": "Subscriber",
+      "lead": "Lead",
+      "mql": "MQL",
+      "sql": "SQL",
+      "opportunity": "Opportunity",
+      "customer": "Customer",
+      "evangelist": "Evangelist"
+    },
+    "validation": {
+      "first_name_required": "First name is required",
+      "max_length": "Maximum {max} characters",
+      "email_invalid": "Invalid email format"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete"
+    }
+  },
   "error": {
+    "CONTACT_NOT_FOUND": "Contact not found.",
     "AUTH_INVALID_CREDENTIALS": "Incorrect email or password.",
     "AUTH_TENANT_NOT_FOUND": "Workspace not found.",
     "AUTH_SLUG_TAKEN": "Workspace address already taken.",
