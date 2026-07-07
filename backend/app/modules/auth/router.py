@@ -1,11 +1,11 @@
-import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db as get_session
-from app.modules.auth.exceptions import NotAuthenticated, PermissionDenied
+from app.modules.auth.dependencies import CurrentUser, get_current_user
+from app.modules.auth.exceptions import PermissionDenied
 from app.modules.auth.schemas import (
     AcceptInviteRequest,
     AuthUserResponse,
@@ -20,13 +20,16 @@ from app.modules.auth.schemas import (
 from app.modules.auth.service import AuthService
 from app.modules.auth.repository import AuthRepository
 from app.modules.auth.use_case import AuthUseCase
-from app.shared.jwt import decode_token
-from app.shared.logging import bind_user_id
 from app.shared.types import SuiteRole
 from app.config import get_settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 users_router = APIRouter(prefix="/users", tags=["users"])
+
+# CurrentUser/get_current_user live in app.modules.auth.dependencies; they are
+# imported above for this module's own endpoints and re-exported here so the
+# existing tests that patch app.modules.auth.router.get_current_user keep working.
+__all__ = ["router", "users_router", "CurrentUser", "get_current_user"]
 
 
 # ── Dependency helpers ────────────────────────────────────────────────────────
@@ -54,39 +57,6 @@ def _get_tenant_slug(request: Request) -> str | None:
     if len(parts) >= 3:
         return parts[0]
     return None
-
-
-class CurrentUser:
-    def __init__(self, user_id: uuid.UUID, tenant_id: uuid.UUID, suite_role: str) -> None:
-        self.user_id = user_id
-        self.tenant_id = tenant_id
-        self.suite_role = suite_role
-
-
-async def get_current_user(
-    request: Request,
-    session: Annotated[AsyncSession, Depends(get_session)],
-) -> CurrentUser:
-    token = request.cookies.get("access_token")
-    if not token:
-        raise NotAuthenticated()
-    claims = decode_token(token)
-    if claims is None or claims.get("type") != "access":
-        raise NotAuthenticated()
-
-    repo = AuthRepository(session)
-    user = await repo.get_user_by_id(uuid.UUID(claims["sub"]))
-    if user is None or not user.is_active:
-        raise NotAuthenticated()
-
-    bind_user_id(str(user.id))
-    request.state.user_id = str(user.id)
-
-    return CurrentUser(
-        user_id=user.id,
-        tenant_id=user.tenant_id,
-        suite_role=user.suite_role,
-    )
 
 
 def _set_auth_cookies(response: Response, access: str, refresh: str) -> None:
