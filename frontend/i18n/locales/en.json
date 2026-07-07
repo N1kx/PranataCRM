@@ -109,6 +109,7 @@
     "title": "Contacts",
     "add": "Add contact",
     "edit": "Edit contact",
+    "back_to_list": "Back to contacts",
     "delete": "Delete",
     "submitting": "Saving...",
     "created": "Contact created successfully.",
