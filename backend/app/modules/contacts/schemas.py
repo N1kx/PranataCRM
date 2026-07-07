@@ -69,7 +69,12 @@ class _ContactFieldsMixin(BaseModel):
     @classmethod
     def _lowercase_email(cls, v: str | None) -> str | None:
         trimmed = _trim(v)
-        return trimmed.lower() if trimmed else None
+        if trimmed is None:
+            return None
+        trimmed = trimmed.lower()
+        if len(trimmed) > 255:
+            raise ValueError("email must be at most 255 characters.")
+        return trimmed
 
     @field_validator("status", mode="before")
     @classmethod

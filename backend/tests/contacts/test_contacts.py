@@ -103,6 +103,17 @@ class ContactsTests(ContactsTestCase):
             self._clear_override(app)
         self.assertEqual(resp.status_code, 422)
 
+    async def test_create_contact_email_too_long_returns_422(self):
+        long_email = "a" * 250 + "@example.com"
+        app = self._override_current_user()
+        try:
+            resp = await self.client.post(
+                "/api/v1/contacts", json={"first_name": "Ada", "email": long_email}
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
+
     async def test_create_contact_invalid_status_returns_422(self):
         app = self._override_current_user()
         try:
