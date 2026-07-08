@@ -109,6 +109,7 @@
     "title": "Contacts",
     "add": "Add contact",
     "edit": "Edit contact",
+    "view": "Contact details",
     "back_to_list": "Back to contacts",
     "delete": "Delete",
     "submitting": "Saving...",
@@ -137,7 +138,8 @@
       "lead_source": "Lead source",
       "city": "City",
       "country": "Country",
-      "description": "Description"
+      "description": "Description",
+      "created_at": "Created at"
     },
     "status": {
       "lead": "Lead",
@@ -161,6 +163,7 @@
       "email_invalid": "Invalid email format"
     },
     "actions": {
+      "view": "View",
       "edit": "Edit",
       "delete": "Delete"
     }

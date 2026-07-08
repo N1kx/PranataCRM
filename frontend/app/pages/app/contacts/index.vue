@@ -46,9 +46,12 @@
       <template v-else>
         <UTable :rows="items" :columns="columns" :loading="isLoading">
           <template #name-data="{ row }">
-            <span class="font-medium text-gray-900 dark:text-white">
-              {{ fullName(row) }}
-            </span>
+            <NuxtLink
+              :to="`/app/contacts/${row.id}`"
+              class="font-medium text-gray-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400"
+            >
+              {{ contactFullName(row) }}
+            </NuxtLink>
           </template>
           <template #email-data="{ row }">
             {{ row.email || '-' }}
@@ -60,7 +63,7 @@
             {{ row.job_title || '-' }}
           </template>
           <template #status-data="{ row }">
-            <UBadge :color="statusColor(row.status)" variant="subtle">
+            <UBadge :color="contactStatusColor(row.status)" variant="subtle">
               {{ t(`contacts.status.${row.status}`) }}
             </UBadge>
           </template>
@@ -88,7 +91,7 @@
         </template>
 
         <p class="text-sm text-gray-600 dark:text-gray-300">
-          {{ t('contacts.confirm_delete_body', { name: deleteTarget ? fullName(deleteTarget) : '' }) }}
+          {{ t('contacts.confirm_delete_body', { name: deleteTarget ? contactFullName(deleteTarget) : '' }) }}
         </p>
 
         <template #footer>
@@ -107,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Contact, ContactStatus } from '~/types/contacts'
+import type { Contact } from '~/types/contacts'
 
 definePageMeta({ layout: 'app', middleware: 'auth' })
 
@@ -133,19 +136,6 @@ const columns = computed(() => [
   { key: 'actions', label: '' },
 ])
 
-function statusColor(status: ContactStatus) {
-  return ({
-    lead: 'gray',
-    qualified: 'blue',
-    customer: 'green',
-    churned: 'red',
-  } as const)[status] ?? 'gray'
-}
-
-function fullName(contact: Contact): string {
-  return [contact.first_name, contact.last_name].filter(Boolean).join(' ')
-}
-
 async function loadContacts() {
   isLoading.value = true
   loadError.value = false
@@ -167,6 +157,11 @@ watch(page, loadContacts)
 
 function rowActions(row: Contact) {
   return [[
+    {
+      label: t('contacts.actions.view'),
+      icon: 'i-lucide-eye',
+      click: () => navigateTo(`/app/contacts/${row.id}`),
+    },
     {
       label: t('contacts.actions.edit'),
       icon: 'i-lucide-pencil',

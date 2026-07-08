@@ -109,6 +109,7 @@
     "title": "Kontak",
     "add": "Tambah kontak",
     "edit": "Ubah kontak",
+    "view": "Detail kontak",
     "back_to_list": "Kembali ke daftar kontak",
     "delete": "Hapus",
     "submitting": "Menyimpan...",
@@ -137,7 +138,8 @@
       "lead_source": "Sumber lead",
       "city": "Kota",
       "country": "Negara",
-      "description": "Deskripsi"
+      "description": "Deskripsi",
+      "created_at": "Dibuat pada"
     },
     "status": {
       "lead": "Lead",
@@ -161,6 +163,7 @@
       "email_invalid": "Format email tidak valid"
     },
     "actions": {
+      "view": "Lihat",
       "edit": "Ubah",
       "delete": "Hapus"
     }
