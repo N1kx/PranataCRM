@@ -189,6 +189,12 @@
     "cancel": "Batal",
     "save": "Simpan"
   },
+  "theme": {
+    "label": "Tema",
+    "light": "Terang",
+    "dark": "Gelap",
+    "system": "Sistem"
+  },
   "lang": {
     "id": "Indonesia",
     "en": "English"

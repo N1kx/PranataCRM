@@ -189,6 +189,12 @@
     "cancel": "Cancel",
     "save": "Save"
   },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
   "lang": {
     "id": "Indonesia",
     "en": "English"
