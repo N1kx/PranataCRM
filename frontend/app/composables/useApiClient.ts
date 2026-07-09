@@ -1,5 +1,9 @@
 import type { ApiError } from '~/types/auth'
 
+type FetchOptions = Parameters<typeof $fetch>[1]
+/** The body type ofetch/$fetch accepts, so wrappers stay in sync with it. */
+type FetchBody = NonNullable<FetchOptions>['body']
+
 export class ApiRequestError extends Error {
   constructor(
     public code: string,
@@ -53,9 +57,13 @@ export function useApiClient() {
   }
 
   return {
-    get: <T>(path: string, opts?: Parameters<typeof $fetch>[1]) =>
+    get: <T>(path: string, opts?: FetchOptions) =>
       request<T>(path, { method: 'GET', ...opts }),
-    post: <T>(path: string, body?: unknown, opts?: Parameters<typeof $fetch>[1]) =>
+    post: <T>(path: string, body?: FetchBody, opts?: FetchOptions) =>
       request<T>(path, { method: 'POST', body, ...opts }),
+    patch: <T>(path: string, body?: FetchBody, opts?: FetchOptions) =>
+      request<T>(path, { method: 'PATCH', body, ...opts }),
+    del: <T>(path: string, opts?: FetchOptions) =>
+      request<T>(path, { method: 'DELETE', ...opts }),
   }
 }

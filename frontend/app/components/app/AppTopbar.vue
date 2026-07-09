@@ -19,6 +19,8 @@
     </div>
 
     <div class="ml-auto flex items-center gap-2">
+      <!-- Theme toggle -->
+      <AppThemeToggle />
       <!-- AI (placeholder) -->
       <UButton icon="i-lucide-sparkles" color="gray" variant="ghost" disabled />
       <!-- Notifications (placeholder) -->

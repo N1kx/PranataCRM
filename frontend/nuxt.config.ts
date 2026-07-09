@@ -37,9 +37,12 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    // These defaults are overridden at runtime by the matching env vars
+    // (NUXT_PUBLIC_API_BASE, NUXT_PUBLIC_APP_ENV) via Nuxt's built-in
+    // runtimeConfig env binding - no process.env access needed here.
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8230/api/v1',
-      appEnv: process.env.NUXT_PUBLIC_APP_ENV || 'development',
+      apiBase: 'http://localhost:8230/api/v1',
+      appEnv: 'development',
     },
   },
 

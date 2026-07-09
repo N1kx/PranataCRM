@@ -105,7 +105,71 @@
     "member_added": "Member berhasil ditambahkan.",
     "invite_sent": "Undangan berhasil dikirim."
   },
+  "contacts": {
+    "title": "Kontak",
+    "add": "Tambah kontak",
+    "edit": "Ubah kontak",
+    "view": "Detail kontak",
+    "back_to_list": "Kembali ke daftar kontak",
+    "delete": "Hapus",
+    "submitting": "Menyimpan...",
+    "created": "Kontak berhasil dibuat.",
+    "saved": "Kontak berhasil diperbarui.",
+    "deleted": "Kontak berhasil dihapus.",
+    "confirm_delete_title": "Hapus kontak",
+    "confirm_delete_body": "Kontak {name} akan dihapus permanen. Lanjutkan?",
+    "table": {
+      "name": "Nama",
+      "email": "Email",
+      "phone": "Telepon",
+      "job_title": "Jabatan",
+      "status": "Status"
+    },
+    "fields": {
+      "first_name": "Nama depan",
+      "last_name": "Nama belakang",
+      "email": "Email",
+      "phone": "Telepon",
+      "mobile_phone": "Ponsel",
+      "job_title": "Jabatan",
+      "department": "Departemen",
+      "status": "Status",
+      "lifecycle_stage": "Tahap lifecycle",
+      "lead_source": "Sumber lead",
+      "city": "Kota",
+      "country": "Negara",
+      "description": "Deskripsi",
+      "created_at": "Dibuat pada"
+    },
+    "status": {
+      "lead": "Lead",
+      "qualified": "Terkualifikasi",
+      "customer": "Pelanggan",
+      "churned": "Churned"
+    },
+    "lifecycle": {
+      "none": "-",
+      "subscriber": "Subscriber",
+      "lead": "Lead",
+      "mql": "MQL",
+      "sql": "SQL",
+      "opportunity": "Peluang",
+      "customer": "Pelanggan",
+      "evangelist": "Evangelist"
+    },
+    "validation": {
+      "first_name_required": "Nama depan wajib diisi",
+      "max_length": "Maksimal {max} karakter",
+      "email_invalid": "Format email tidak valid"
+    },
+    "actions": {
+      "view": "Lihat",
+      "edit": "Ubah",
+      "delete": "Hapus"
+    }
+  },
   "error": {
+    "CONTACT_NOT_FOUND": "Kontak tidak ditemukan.",
     "AUTH_INVALID_CREDENTIALS": "Email atau kata sandi salah.",
     "AUTH_TENANT_NOT_FOUND": "Workspace tidak ditemukan.",
     "AUTH_SLUG_TAKEN": "Alamat workspace sudah dipakai.",
@@ -124,6 +188,12 @@
     "retry": "Coba lagi",
     "cancel": "Batal",
     "save": "Simpan"
+  },
+  "theme": {
+    "label": "Tema",
+    "light": "Terang",
+    "dark": "Gelap",
+    "system": "Sistem"
   },
   "lang": {
     "id": "Indonesia",
