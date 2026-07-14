@@ -65,8 +65,13 @@ services:
       JWT_SECRET_KEY: dev-secret-change-in-production
     # Bind-mounts the source over the image's baked-in copy, so local edits
     # apply immediately - combined with --reload, no rebuild is needed.
+    # The anonymous volume shadows /app/.venv so the host's Windows virtualenv
+    # never overlays the container: dependencies come from the image's global
+    # site-packages (installed at build time), so a library change means editing
+    # requirements.txt and rebuilding the image (`docker compose up -d --build api`).
     volumes:
       - ./backend:/app
+      - /app/.venv
     command: ["--reload"]
     depends_on:
       db:
