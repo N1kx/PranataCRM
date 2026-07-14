@@ -67,6 +67,9 @@
               {{ t(`contacts.status.${row.original.status}`) }}
             </UBadge>
           </template>
+          <template #owner-cell="{ row }">
+            {{ row.original.owner_id ? (ownerNames[row.original.owner_id] ?? '-') : '-' }}
+          </template>
           <template #actions-cell="{ row }">
             <UDropdownMenu :items="rowActions(row.original)">
               <UButton color="neutral" variant="ghost" icon="i-lucide-ellipsis-vertical" />
@@ -111,6 +114,7 @@ definePageMeta({ layout: 'app', middleware: 'auth' })
 
 const { t } = useI18n()
 const { list, remove } = useContacts()
+const { lookup } = useUsers()
 const toast = useToast()
 
 // ── List state ────────────────────────────────────────────────────────────────
@@ -120,6 +124,8 @@ const total = ref(0)
 const page = ref(1)
 const pageSize = 20
 const isLoading = ref(false)
+// id -> full_name map, resolved once per page load instead of per row.
+const ownerNames = ref<Record<string, string>>({})
 const loadError = ref(false)
 
 const columns = computed<TableColumn<Contact>[]>(() => [
@@ -128,6 +134,7 @@ const columns = computed<TableColumn<Contact>[]>(() => [
   { accessorKey: 'phone', header: t('contacts.table.phone') },
   { accessorKey: 'job_title', header: t('contacts.table.job_title') },
   { accessorKey: 'status', header: t('contacts.table.status') },
+  { accessorKey: 'owner_id', id: 'owner', header: t('contacts.table.owner') },
   { id: 'actions', header: '' },
 ])
 
@@ -141,9 +148,31 @@ async function loadContacts() {
   }
   catch {
     loadError.value = true
+    return
   }
   finally {
     isLoading.value = false
+  }
+  // Owner names are a secondary enrichment: resolve them separately so a lookup
+  // failure degrades to "-" instead of blanking the whole (already loaded) list.
+  await loadOwnerNames(items.value)
+}
+
+async function loadOwnerNames(contacts: Contact[]) {
+  const ids = [...new Set(contacts.map(c => c.owner_id).filter((id): id is string => !!id))]
+  if (!ids.length) {
+    ownerNames.value = {}
+    return
+  }
+  try {
+    const owners = await lookup(ids)
+    ownerNames.value = owners.reduce<Record<string, string>>((acc, o) => {
+      acc[o.id] = o.full_name
+      return acc
+    }, {})
+  }
+  catch {
+    ownerNames.value = {}
   }
 }
 

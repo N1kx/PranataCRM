@@ -114,6 +114,7 @@
     "view": "Contact details",
     "back_to_list": "Back to contacts",
     "delete": "Delete",
+    "owner": "Owner",
     "submitting": "Saving...",
     "created": "Contact created successfully.",
     "saved": "Contact updated successfully.",
@@ -125,7 +126,8 @@
       "email": "Email",
       "phone": "Phone",
       "job_title": "Job title",
-      "status": "Status"
+      "status": "Status",
+      "owner": "Owner"
     },
     "fields": {
       "first_name": "First name",
@@ -169,6 +171,12 @@
       "edit": "Edit",
       "delete": "Delete"
     }
+  },
+  "user_select": {
+    "placeholder": "Select a teammate",
+    "search_placeholder": "Search teammate...",
+    "no_results": "No teammates found",
+    "unassigned": "Unassigned"
   },
   "error": {
     "CONTACT_NOT_FOUND": "Contact not found.",

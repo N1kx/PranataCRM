@@ -15,6 +15,7 @@ from app.modules.auth.exceptions import (
     TenantNotFound,
     InviteInvalidOrExpired,
 )
+from app.modules.auth.models import User
 from app.modules.auth.repository import AuthRepository
 from app.modules.auth.schemas import (
     AcceptInviteRequest,
@@ -25,6 +26,7 @@ from app.modules.auth.schemas import (
     MeResponse,
     RegisterTenantRequest,
     RegisterTenantResponse,
+    UserSummary,
 )
 from app.shared.jwt import create_access_token, create_refresh_token, decode_token
 from app.shared.security import hash_password, verify_password
@@ -310,6 +312,24 @@ class AuthService:
         if claims is None or claims.get("type") != "access":
             raise NotAuthenticated()
         return uuid.UUID(claims["sub"]), uuid.UUID(claims["tid"])
+
+    async def search_users(
+        self, tenant_id: uuid.UUID, query: str, limit: int = 20
+    ) -> list[UserSummary]:
+        rows = await self._repo.search_users(tenant_id, query, min(limit, 50))
+        return [self._to_summary(u) for u in rows]
+
+    async def lookup_users(
+        self, tenant_id: uuid.UUID, ids: list[uuid.UUID]
+    ) -> list[UserSummary]:
+        rows = await self._repo.get_users_by_ids(tenant_id, ids[:100])
+        return [self._to_summary(u) for u in rows]
+
+    @staticmethod
+    def _to_summary(u: User) -> UserSummary:
+        return UserSummary(
+            id=str(u.id), full_name=u.full_name, email=u.email, avatar_url=u.avatar_url,
+        )
 
     # ── Private helpers ───────────────────────────────────────────────────────
 

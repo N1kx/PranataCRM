@@ -13,6 +13,7 @@ export type PreferredContactMethod = 'email' | 'phone' | 'sms' | 'whatsapp'
 
 export interface Contact {
   id: string
+  owner_id?: string | null
   first_name: string
   last_name?: string | null
   email?: string | null
@@ -30,6 +31,7 @@ export interface Contact {
 }
 
 export interface ContactCreatePayload {
+  owner_id?: string | null
   first_name: string
   last_name?: string
   email?: string

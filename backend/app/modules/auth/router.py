@@ -1,6 +1,7 @@
+import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db as get_session
@@ -16,6 +17,7 @@ from app.modules.auth.schemas import (
     MeResponse,
     RegisterTenantRequest,
     RegisterTenantResponse,
+    UserSummary,
 )
 from app.modules.auth.service import AuthService
 from app.modules.auth.repository import AuthRepository
@@ -157,6 +159,36 @@ async def create_user(
     )
     await session.commit()
     return result
+
+
+@users_router.get("/search", response_model=list[UserSummary])
+async def search_users(
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    auth: Annotated[AuthUseCase, Depends(get_auth_usecase)],
+    q: str = "",
+    # Bounded at the edge so a crafted value (e.g. -1 -> SQL "LIMIT -1", which
+    # Postgres rejects) can't reach the query and 500 the endpoint.
+    limit: int = Query(default=20, ge=1, le=50),
+) -> list[UserSummary]:
+    return await auth.search_users(current_user.tenant_id, q, limit)
+
+
+@users_router.get("/lookup", response_model=list[UserSummary])
+async def lookup_users(
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    auth: Annotated[AuthUseCase, Depends(get_auth_usecase)],
+    ids: str = "",
+) -> list[UserSummary]:
+    parsed = []
+    for x in ids.split(","):
+        x = x.strip()
+        if not x:
+            continue
+        try:
+            parsed.append(uuid.UUID(x))
+        except ValueError:
+            continue
+    return await auth.lookup_users(current_user.tenant_id, parsed)
 
 
 @users_router.post("/invite", response_model=InviteSentResponse, status_code=200)
