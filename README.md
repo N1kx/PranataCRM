@@ -15,6 +15,8 @@ pranata-crm/
 │   ├── requirements.txt
 │   └── run.py     ← Windows-compatible server entrypoint
 ├── docker-compose.yml
+├── nginx/         ← Reverse proxy config for the `gateway` service
+│   └── nginx.conf
 └── frontend/      ← Nuxt 4 + Nuxt UI + Pinia + i18n
     ├── app/       ← Pages, components, composables, stores, layouts
     ├── i18n/      ← Locale files (id / en)
@@ -53,13 +55,14 @@ pranata-crm/
 
 ## Running with Docker (Recommended)
 
-`docker-compose.yml` spins up the full stack: PostgreSQL, Redis, RabbitMQ, and the API.
-Database migrations run automatically on API startup via `entrypoint.sh`.
+`docker-compose.yml` spins up the full stack: PostgreSQL, Redis, RabbitMQ, the API, the
+frontend, and an **nginx gateway** that puts both behind a single origin. Database migrations
+run automatically on API startup via `entrypoint.sh`.
 
 ### 1. Start everything
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
 ### 2. Verify all services are healthy
@@ -74,8 +77,10 @@ Expected output:
 NAME               STATUS
 pranata_api        Up (healthy)
 pranata_db         Up (healthy)
+pranata_gateway    Up
 pranata_redis      Up (healthy)
 pranata_rabbitmq   Up (healthy)
+pranata_web        Up
 ```
 
 ### 3. Health check
@@ -88,9 +93,31 @@ curl http://localhost:8230/health
 { "status": "ok", "redis": true, "db": true }
 ```
 
-> The API is exposed on port **8230** (mapped from container port 8000).
+> The API is exposed directly on port **8230** (mapped from container port 8000) for
+> debugging. Normal usage goes through the gateway instead (see below).
 
-### 4. Stop
+### 4. Open the app
+
+```text
+http://localhost:8080
+```
+
+The **gateway** (nginx) is the single entrypoint: `/` proxies to the frontend, `/api/v1/`
+proxies to the API — same origin, so the browser never makes a cross-origin request between
+them. (`/api/v1/` specifically, not the broader `/api/` — Nuxt's own server reserves `/api/`
+for internal routes such as icon serving.) The `web` service is still built with the production `.output` bundle
+(`docker compose up --build` is required after a frontend code change); only the **API**
+container is wired for live editing (see below). Direct access to `pranata_web` on
+**:3000** and `pranata_api` on **:8230** remains available for debugging either service in
+isolation.
+
+### 5. Editing backend code
+
+The `api` service bind-mounts `./backend` into the container and runs `uvicorn --reload`, so
+changes to backend source apply immediately — no rebuild needed. Only changes to
+`requirements.txt` require `docker compose up -d --build api`.
+
+### 6. Stop
 
 ```bash
 docker compose down
@@ -176,19 +203,23 @@ NUXT_PUBLIC_APP_ENV=development
 
 ### Option B — Full stack via Docker (demo)
 
-`docker-compose.yml` includes a `web` service that builds and serves the frontend.
+`docker-compose.yml` includes a `web` service that builds and serves the frontend, plus a
+`gateway` (nginx) service in front of it. See [Running with Docker](#running-with-docker-recommended)
+above — the short version:
 
 ```bash
 docker compose up --build
 ```
 
-This brings up everything (db, redis, rabbitmq, api, web). Open <http://localhost:3000>.
+This brings up everything (db, redis, rabbitmq, api, web, gateway). Open
+<http://localhost:8080> (the gateway — same origin as the API, so no CORS setup is needed).
 
-To point the build at a remote backend (e.g. demo server), pass the API base at build time:
+To point the build at a remote backend instead of the bundled `api` service (e.g. a demo
+server), pass an absolute API base at build time and skip the gateway:
 
 ```bash
 docker compose build --build-arg NUXT_PUBLIC_API_BASE=http://your-server:8230/api/v1 web
-docker compose up
+docker compose up web
 ```
 
 ### Language
