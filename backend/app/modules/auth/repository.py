@@ -2,7 +2,7 @@ import hashlib
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.auth.models import RefreshToken, Role, Tenant, User, UserRole
@@ -71,6 +71,33 @@ class AuthRepository:
             .where(User.id == user_id)
             .values(last_login_at=datetime.now(timezone.utc))
         )
+
+    async def search_users(
+        self, tenant_id: uuid.UUID, query: str, limit: int = 20
+    ) -> list[User]:
+        stmt = select(User).where(
+            User.tenant_id == tenant_id,
+            User.is_active.is_(True),
+        )
+        q = (query or "").strip()
+        if q:
+            like = f"%{q.lower()}%"
+            stmt = stmt.where(
+                func.lower(User.full_name).like(like) | func.lower(User.email).like(like)
+            )
+        stmt = stmt.order_by(User.full_name).limit(limit)
+        result = await self._session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_users_by_ids(
+        self, tenant_id: uuid.UUID, ids: list[uuid.UUID]
+    ) -> list[User]:
+        if not ids:
+            return []
+        result = await self._session.execute(
+            select(User).where(User.tenant_id == tenant_id, User.id.in_(ids))
+        )
+        return list(result.scalars().all())
 
     # ── Licensing helpers ─────────────────────────────────────────────────────
 

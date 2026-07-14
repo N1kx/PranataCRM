@@ -121,3 +121,10 @@ class MeResponse(BaseModel):
     tenant_id: str
     is_active: bool
     created_at: datetime
+
+
+class UserSummary(BaseModel):
+    id: str
+    full_name: str
+    email: str
+    avatar_url: str | None = None

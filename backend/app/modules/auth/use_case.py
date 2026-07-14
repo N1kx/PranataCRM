@@ -8,12 +8,13 @@ from app.modules.auth.schemas import (
     LoginRequest,
     RegisterTenantRequest,
     RegisterTenantResponse,
+    UserSummary,
 )
 from app.modules.auth.service import AuthService
 
 
 class AuthUseCase:
-    """Implements AuthContractProtocol. Delegates to AuthService."""
+    """Entry point for the auth module's own router. Delegates to AuthService."""
 
     def __init__(self, service: AuthService) -> None:
         self._service = service
@@ -47,3 +48,13 @@ class AuthUseCase:
 
     async def logout(self, refresh_token: str | None) -> None:
         await self._service.logout(refresh_token)
+
+    async def search_users(
+        self, tenant_id: uuid.UUID, query: str, limit: int = 20
+    ) -> list[UserSummary]:
+        return await self._service.search_users(tenant_id, query, limit)
+
+    async def lookup_users(
+        self, tenant_id: uuid.UUID, ids: list[uuid.UUID]
+    ) -> list[UserSummary]:
+        return await self._service.lookup_users(tenant_id, ids)
