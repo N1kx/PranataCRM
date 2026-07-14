@@ -5,7 +5,7 @@
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
         {{ t('contacts.title') }}
       </h1>
-      <AppButton color="violet" icon="i-lucide-user-plus" @click="navigateTo('/app/contacts/new')">
+      <AppButton color="primary" icon="i-lucide-user-plus" @click="navigateTo('/app/contacts/new')">
         {{ t('contacts.add') }}
       </AppButton>
     </div>
@@ -13,13 +13,13 @@
     <!-- Error state -->
     <UAlert
       v-if="loadError"
-      color="red"
+      color="error"
       variant="soft"
       icon="i-lucide-circle-alert"
       :title="t('common.error_state')"
     >
       <template #description>
-        <AppButton color="red" variant="outline" size="xs" class="mt-2" @click="loadContacts">
+        <AppButton color="error" variant="outline" size="xs" class="mt-2" @click="loadContacts">
           {{ t('common.retry') }}
         </AppButton>
       </template>
@@ -44,72 +44,67 @@
       </div>
 
       <template v-else>
-        <UTable :rows="items" :columns="columns" :loading="isLoading">
-          <template #name-data="{ row }">
+        <UTable :data="items" :columns="columns" :loading="isLoading">
+          <template #name-cell="{ row }">
             <NuxtLink
-              :to="`/app/contacts/${row.id}`"
-              class="font-medium text-gray-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400"
+              :to="`/app/contacts/${row.original.id}`"
+              class="font-medium text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400"
             >
-              {{ contactFullName(row) }}
+              {{ contactFullName(row.original) }}
             </NuxtLink>
           </template>
-          <template #email-data="{ row }">
-            {{ row.email || '-' }}
+          <template #email-cell="{ row }">
+            {{ row.original.email || '-' }}
           </template>
-          <template #phone-data="{ row }">
-            {{ row.phone || '-' }}
+          <template #phone-cell="{ row }">
+            {{ row.original.phone || '-' }}
           </template>
-          <template #job_title-data="{ row }">
-            {{ row.job_title || '-' }}
+          <template #job_title-cell="{ row }">
+            {{ row.original.job_title || '-' }}
           </template>
-          <template #status-data="{ row }">
-            <UBadge :color="contactStatusColor(row.status)" variant="subtle">
-              {{ t(`contacts.status.${row.status}`) }}
+          <template #status-cell="{ row }">
+            <UBadge :color="contactStatusColor(row.original.status)" variant="subtle">
+              {{ t(`contacts.status.${row.original.status}`) }}
             </UBadge>
           </template>
-          <template #actions-data="{ row }">
-            <UDropdown :items="rowActions(row)">
-              <UButton color="gray" variant="ghost" icon="i-lucide-ellipsis-vertical" />
-            </UDropdown>
+          <template #actions-cell="{ row }">
+            <UDropdownMenu :items="rowActions(row.original)">
+              <UButton color="neutral" variant="ghost" icon="i-lucide-ellipsis-vertical" />
+            </UDropdownMenu>
           </template>
         </UTable>
 
         <!-- Pagination -->
         <div v-if="total > pageSize" class="flex justify-end pt-4">
-          <UPagination v-model="page" :page-count="pageSize" :total="total" />
+          <UPagination v-model:page="page" :items-per-page="pageSize" :total="total" />
         </div>
       </template>
     </UCard>
 
     <!-- Delete confirmation modal -->
-    <UModal v-model="deleteModalOpen">
-      <UCard>
-        <template #header>
-          <h2 class="text-lg font-semibold">
-            {{ t('contacts.confirm_delete_title') }}
-          </h2>
-        </template>
-
+    <UModal v-model:open="deleteModalOpen" :title="t('contacts.confirm_delete_title')">
+      <template #body>
         <p class="text-sm text-gray-600 dark:text-gray-300">
           {{ t('contacts.confirm_delete_body', { name: deleteTarget ? contactFullName(deleteTarget) : '' }) }}
         </p>
+      </template>
 
-        <template #footer>
-          <div class="flex justify-end gap-3">
-            <AppButton color="gray" variant="outline" :disabled="isDeleting" @click="deleteModalOpen = false">
-              {{ t('common.cancel') }}
-            </AppButton>
-            <AppButton color="red" :loading="isDeleting" @click="onDelete">
-              {{ t('contacts.delete') }}
-            </AppButton>
-          </div>
-        </template>
-      </UCard>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <AppButton color="neutral" variant="outline" :disabled="isDeleting" @click="deleteModalOpen = false">
+            {{ t('common.cancel') }}
+          </AppButton>
+          <AppButton color="error" :loading="isDeleting" @click="onDelete">
+            {{ t('contacts.delete') }}
+          </AppButton>
+        </div>
+      </template>
     </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { TableColumn } from '@nuxt/ui'
 import type { Contact } from '~/types/contacts'
 
 definePageMeta({ layout: 'app', middleware: 'auth' })
@@ -127,13 +122,13 @@ const pageSize = 20
 const isLoading = ref(false)
 const loadError = ref(false)
 
-const columns = computed(() => [
-  { key: 'name', label: t('contacts.table.name') },
-  { key: 'email', label: t('contacts.table.email') },
-  { key: 'phone', label: t('contacts.table.phone') },
-  { key: 'job_title', label: t('contacts.table.job_title') },
-  { key: 'status', label: t('contacts.table.status') },
-  { key: 'actions', label: '' },
+const columns = computed<TableColumn<Contact>[]>(() => [
+  { accessorKey: 'first_name', id: 'name', header: t('contacts.table.name') },
+  { accessorKey: 'email', header: t('contacts.table.email') },
+  { accessorKey: 'phone', header: t('contacts.table.phone') },
+  { accessorKey: 'job_title', header: t('contacts.table.job_title') },
+  { accessorKey: 'status', header: t('contacts.table.status') },
+  { id: 'actions', header: '' },
 ])
 
 async function loadContacts() {
@@ -160,17 +155,17 @@ function rowActions(row: Contact) {
     {
       label: t('contacts.actions.view'),
       icon: 'i-lucide-eye',
-      click: () => navigateTo(`/app/contacts/${row.id}`),
+      onSelect: () => navigateTo(`/app/contacts/${row.id}`),
     },
     {
       label: t('contacts.actions.edit'),
       icon: 'i-lucide-pencil',
-      click: () => navigateTo(`/app/contacts/${row.id}/edit`),
+      onSelect: () => navigateTo(`/app/contacts/${row.id}/edit`),
     },
     {
       label: t('contacts.actions.delete'),
       icon: 'i-lucide-trash-2',
-      click: () => confirmDelete(row),
+      onSelect: () => confirmDelete(row),
     },
   ]]
 }
@@ -191,7 +186,7 @@ async function onDelete() {
   isDeleting.value = true
   try {
     await remove(deleteTarget.value.id)
-    toast.add({ title: t('contacts.deleted'), color: 'green', icon: 'i-lucide-check-circle' })
+    toast.add({ title: t('contacts.deleted'), color: 'success', icon: 'i-lucide-check-circle' })
     deleteModalOpen.value = false
     deleteTarget.value = null
     // If we deleted the last row of a page > 1, step back one page
@@ -207,7 +202,7 @@ async function onDelete() {
     const e = err as { code?: string }
     toast.add({
       title: t(`error.${e.code ?? 'unknown'}`, t('error.unknown')),
-      color: 'red',
+      color: 'error',
       icon: 'i-lucide-circle-alert',
     })
   }

@@ -6,7 +6,7 @@
           {{ t('team.title') }}
         </h1>
       </div>
-      <AppButton color="violet" icon="i-lucide-user-plus" @click="modalOpen = true">
+      <AppButton color="primary" icon="i-lucide-user-plus" @click="modalOpen = true">
         {{ t('team.add_member') }}
       </AppButton>
     </div>
@@ -14,7 +14,7 @@
     <!-- Seat limit warning -->
     <UAlert
       v-if="seatLimitError"
-      color="orange"
+      color="warning"
       icon="i-lucide-alert-triangle"
       :title="t('team.seat_full')"
       variant="soft"
@@ -38,22 +38,22 @@
     </UCard>
 
     <!-- Add member modal -->
-    <UModal v-model="modalOpen">
-      <UCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold">
-              {{ t('team.add_member') }}
-            </h2>
-            <UButton icon="i-lucide-x" color="gray" variant="ghost" @click="modalOpen = false" />
-          </div>
-          <!-- Tabs -->
-          <UTabs v-model="activeTab" :items="tabs" class="mt-3" />
-        </template>
+    <UModal v-model:open="modalOpen">
+      <template #header>
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold">
+            {{ t('team.add_member') }}
+          </h2>
+          <UButton icon="i-lucide-x" color="neutral" variant="ghost" @click="modalOpen = false" />
+        </div>
+        <!-- Tabs -->
+        <UTabs v-model="activeTab" :items="tabs" class="mt-3" />
+      </template>
 
+      <template #body>
         <UAlert
           v-if="formError"
-          color="red"
+          color="error"
           variant="soft"
           :description="formError"
           class="mb-4"
@@ -81,7 +81,7 @@
             <!-- TODO: fetch roles from GET /roles endpoint when available -->
             <AppInput v-model="createForm.role_id" placeholder="UUID role (TODO: dropdown)" :disabled="isLoading" />
           </AppField>
-          <AppButton type="submit" block color="violet" :loading="isLoading">
+          <AppButton type="submit" block color="primary" :loading="isLoading">
             {{ isLoading ? t('team.submitting') : t('team.submit_create') }}
           </AppButton>
         </UForm>
@@ -108,11 +108,11 @@
             <!-- TODO: fetch roles from GET /roles endpoint when available -->
             <AppInput v-model="inviteForm.role_id" placeholder="UUID role (TODO: dropdown)" :disabled="isLoading" />
           </AppField>
-          <AppButton type="submit" block color="violet" :loading="isLoading">
+          <AppButton type="submit" block color="primary" :loading="isLoading">
             {{ isLoading ? t('team.submitting') : t('team.submit_invite') }}
           </AppButton>
         </UForm>
-      </UCard>
+      </template>
     </UModal>
   </div>
 </template>
@@ -163,7 +163,7 @@ async function onCreateUser() {
   isLoading.value = true
   try {
     await createUser({ ...createForm })
-    toast.add({ title: t('team.member_added'), color: 'green', icon: 'i-lucide-check-circle' })
+    toast.add({ title: t('team.member_added'), color: 'success', icon: 'i-lucide-check-circle' })
     modalOpen.value = false
     Object.assign(createForm, { full_name: '', email: '', password: '', role_id: '' })
   }
@@ -192,7 +192,7 @@ async function onInviteUser() {
       full_name: inviteForm.full_name || undefined,
       role_id: inviteForm.role_id,
     })
-    toast.add({ title: t('team.invite_sent'), color: 'green', icon: 'i-lucide-send' })
+    toast.add({ title: t('team.invite_sent'), color: 'success', icon: 'i-lucide-send' })
     modalOpen.value = false
     Object.assign(inviteForm, { email: '', full_name: '', role_id: '' })
   }

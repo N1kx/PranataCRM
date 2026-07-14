@@ -86,7 +86,9 @@
     "settings": "Pengaturan",
     "team": "Tim & Seat",
     "roles": "Role & Akses",
-    "billing": "Billing"
+    "billing": "Billing",
+    "collapse_sidebar": "Ciutkan sidebar",
+    "expand_sidebar": "Perluas sidebar"
   },
   "team": {
     "title": "Tim & Seat",

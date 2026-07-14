@@ -14,16 +14,16 @@
 </template>
 
 <script setup lang="ts">
-import type { ButtonColor, ButtonSize, ButtonVariant } from '#ui/types'
+import type { ButtonProps } from '#ui/types'
 
 defineOptions({ inheritAttrs: false })
 
 defineProps<{
   loading?: boolean
   disabled?: boolean
-  color?: ButtonColor
-  variant?: ButtonVariant
-  size?: ButtonSize
+  color?: ButtonProps['color']
+  variant?: ButtonProps['variant']
+  size?: ButtonProps['size']
   block?: boolean
   type?: 'button' | 'submit' | 'reset'
 }>()

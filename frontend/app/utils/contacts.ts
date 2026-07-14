@@ -1,13 +1,13 @@
 import type { Contact, ContactStatus } from '~/types/contacts'
 
-/** Badge color per contact status (Nuxt UI v2 palette). */
+/** Badge color per contact status (Nuxt UI v4 semantic color aliases). */
 export function contactStatusColor(status: ContactStatus) {
   return ({
-    lead: 'gray',
-    qualified: 'blue',
-    customer: 'green',
-    churned: 'red',
-  } as const)[status] ?? 'gray'
+    lead: 'neutral',
+    qualified: 'info',
+    customer: 'success',
+    churned: 'error',
+  } as const)[status] ?? 'neutral'
 }
 
 export function contactFullName(contact: Contact): string {

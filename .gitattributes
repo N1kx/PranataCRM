@@ -1,0 +1,4 @@
+# Shell scripts run inside Linux containers - CRLF breaks the shebang line
+# (exec looks up "/bin/sh\r", which does not exist) and can corrupt multi-line
+# commands. Force LF regardless of the checkout platform's core.autocrlf.
+*.sh text eol=lf
