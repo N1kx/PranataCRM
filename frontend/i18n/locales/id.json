@@ -114,6 +114,7 @@
     "view": "Detail kontak",
     "back_to_list": "Kembali ke daftar kontak",
     "delete": "Hapus",
+    "owner": "Pemilik",
     "submitting": "Menyimpan...",
     "created": "Kontak berhasil dibuat.",
     "saved": "Kontak berhasil diperbarui.",
@@ -125,7 +126,8 @@
       "email": "Email",
       "phone": "Telepon",
       "job_title": "Jabatan",
-      "status": "Status"
+      "status": "Status",
+      "owner": "Pemilik"
     },
     "fields": {
       "first_name": "Nama depan",
@@ -169,6 +171,12 @@
       "edit": "Ubah",
       "delete": "Hapus"
     }
+  },
+  "user_select": {
+    "placeholder": "Pilih anggota tim",
+    "search_placeholder": "Cari anggota tim...",
+    "no_results": "Anggota tim tidak ditemukan",
+    "unassigned": "Belum ditugaskan"
   },
   "error": {
     "CONTACT_NOT_FOUND": "Kontak tidak ditemukan.",

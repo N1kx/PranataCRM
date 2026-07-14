@@ -15,6 +15,9 @@
       <AppField :label="t('contacts.fields.last_name')" name="last_name">
         <AppInput v-model="form.last_name" :disabled="isSaving" />
       </AppField>
+      <AppField :label="t('contacts.owner')" name="owner_id">
+        <AppUserSelect v-model="form.owner_id" :initial="ownerInitial" :disabled="isSaving" />
+      </AppField>
       <AppField :label="t('contacts.fields.email')" name="email">
         <AppInput v-model="form.email" type="email" :disabled="isSaving" />
       </AppField>
@@ -37,7 +40,7 @@
         <USelect v-model="form.status" :items="statusOptions" :disabled="isSaving" class="w-full" />
       </AppField>
       <AppField :label="t('contacts.fields.lifecycle_stage')" name="lifecycle_stage">
-        <USelect v-model="form.lifecycle_stage" :items="lifecycleOptions" :disabled="isSaving" class="w-full" />
+        <USelect v-model="lifecycleStageModel" :items="lifecycleOptions" :disabled="isSaving" class="w-full" />
       </AppField>
       <AppField :label="t('contacts.fields.city')" name="city">
         <AppInput v-model="form.city" :disabled="isSaving" />
@@ -64,6 +67,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { Contact, ContactStatus, ContactUpdatePayload, LifecycleStage } from '~/types/contacts'
+import type { UserSummary } from '~/types/user'
 
 const props = defineProps<{
   /** Contact to edit; omit for create mode. */
@@ -77,6 +81,8 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const { create, update } = useContacts()
+const { user: currentUser } = useAuth()
+const { lookup } = useUsers()
 
 const CONTACT_STATUSES: ContactStatus[] = ['lead', 'qualified', 'customer', 'churned']
 const LIFECYCLE_STAGES: LifecycleStage[] = [
@@ -85,8 +91,12 @@ const LIFECYCLE_STAGES: LifecycleStage[] = [
 
 const isSaving = ref(false)
 const formError = ref('')
+// Resolved label for the currently selected owner, so AppUserSelect can render
+// a name immediately instead of a blank box while it searches.
+const ownerInitial = ref<UserSummary | null>(null)
 
 const emptyForm = {
+  owner_id: null as string | null,
   first_name: '',
   last_name: '',
   email: '',
@@ -105,13 +115,18 @@ const emptyForm = {
 const form = reactive({ ...emptyForm })
 let original = { ...emptyForm }
 
-watch(() => props.contact, (contact) => {
+watch(() => props.contact, async (contact) => {
   if (!contact) {
-    Object.assign(form, emptyForm)
-    original = { ...emptyForm }
+    // Create mode: default the owner to the logged-in user (still changeable).
+    Object.assign(form, emptyForm, { owner_id: currentUser.value?.id ?? null })
+    original = { ...form }
+    ownerInitial.value = currentUser.value
+      ? { id: currentUser.value.id, full_name: currentUser.value.full_name, email: currentUser.value.email }
+      : null
     return
   }
   Object.assign(form, {
+    owner_id: contact.owner_id ?? null,
     first_name: contact.first_name,
     last_name: contact.last_name ?? '',
     email: contact.email ?? '',
@@ -127,6 +142,12 @@ watch(() => props.contact, (contact) => {
     description: contact.description ?? '',
   })
   original = { ...form }
+
+  ownerInitial.value = null
+  if (contact.owner_id) {
+    const [owner] = await lookup([contact.owner_id])
+    ownerInitial.value = owner ?? null
+  }
 }, { immediate: true })
 
 // Mirrors backend #14 so the user never hits an avoidable 422.
@@ -157,17 +178,29 @@ const schema = computed(() => z.object({
 const statusOptions = computed(() =>
   CONTACT_STATUSES.map(value => ({ value, label: t(`contacts.status.${value}`) })),
 )
+
+// Reka UI's <SelectItem/> rejects an empty-string value (it's reserved to mean
+// "cleared"), so the "no lifecycle stage" option needs a non-empty sentinel.
+// form.lifecycle_stage itself stays '' internally (matches the API/Zod schema);
+// this computed just translates at the UI boundary.
+const NONE_SENTINEL = '__none__'
 const lifecycleOptions = computed(() => [
-  { value: '', label: t('contacts.lifecycle.none') },
+  { value: NONE_SENTINEL, label: t('contacts.lifecycle.none') },
   ...LIFECYCLE_STAGES.map(value => ({ value, label: t(`contacts.lifecycle.${value}`) })),
 ])
+const lifecycleStageModel = computed({
+  get: () => form.lifecycle_stage || NONE_SENTINEL,
+  set: (v: string) => {
+    form.lifecycle_stage = (v === NONE_SENTINEL ? '' : v) as LifecycleStage | ''
+  },
+})
 
 /**
  * Build the payload: trim strings, drop empty optional fields, and in edit
  * mode only include fields whose value changed (partial PATCH).
  */
 function buildPayload(): ContactUpdatePayload {
-  const payload: Record<string, string> = {}
+  const payload: Record<string, string | null> = {}
   for (const [key, raw] of Object.entries(form)) {
     const value = typeof raw === 'string' ? raw.trim() : raw
     if (props.contact && value === original[key as keyof typeof original]) {
