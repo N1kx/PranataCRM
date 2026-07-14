@@ -22,11 +22,11 @@
       <!-- Theme toggle -->
       <AppThemeToggle />
       <!-- AI (placeholder) -->
-      <UButton icon="i-lucide-sparkles" color="gray" variant="ghost" disabled />
+      <UButton icon="i-lucide-sparkles" color="neutral" variant="ghost" disabled />
       <!-- Notifications (placeholder) -->
-      <UButton icon="i-lucide-bell" color="gray" variant="ghost" disabled />
+      <UButton icon="i-lucide-bell" color="neutral" variant="ghost" disabled />
       <!-- New deal CTA -->
-      <UButton icon="i-lucide-plus" color="violet" size="sm" disabled>
+      <UButton icon="i-lucide-plus" color="primary" size="sm" disabled>
         Deal baru
       </UButton>
     </div>

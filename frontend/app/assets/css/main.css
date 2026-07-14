@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "@nuxt/ui";
 
 /* Fix browser autofill overriding input background/color */
 input:-webkit-autofill,

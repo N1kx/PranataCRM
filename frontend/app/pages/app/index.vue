@@ -15,7 +15,7 @@
           v-for="p in periods"
           :key="p.value"
           size="sm"
-          :color="period === p.value ? 'violet' : 'gray'"
+          :color="period === p.value ? 'primary' : 'neutral'"
           :variant="period === p.value ? 'solid' : 'outline'"
           @click="period = p.value"
         >
@@ -92,7 +92,7 @@
                   <UBadge
                     :label="card.score + '%'"
                     size="xs"
-                    :color="card.score >= 70 ? 'green' : card.score >= 40 ? 'yellow' : 'red'"
+                    :color="card.score >= 70 ? 'success' : card.score >= 40 ? 'warning' : 'error'"
                   />
                 </div>
               </div>

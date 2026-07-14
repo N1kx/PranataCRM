@@ -1,8 +1,7 @@
 <template>
-  <!-- Nuxt UI v2 component is UFormGroup (UFormField only exists in v3) -->
-  <UFormGroup :label="label" :name="name" :hint="hint" :error="error">
+  <UFormField :label="label" :name="name" :hint="hint" :error="error" :required="required">
     <slot />
-  </UFormGroup>
+  </UFormField>
 </template>
 
 <script setup lang="ts">
@@ -11,5 +10,6 @@ defineProps<{
   name?: string
   hint?: string
   error?: string
+  required?: boolean
 }>()
 </script>

@@ -2,14 +2,14 @@
   <UForm :schema="schema" :state="form" class="space-y-4" @submit="onSubmit">
     <UAlert
       v-if="formError"
-      color="red"
+      color="error"
       variant="soft"
       :description="formError"
       icon="i-lucide-circle-alert"
     />
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <AppField :label="t('contacts.fields.first_name')" name="first_name">
+      <AppField :label="t('contacts.fields.first_name')" name="first_name" required>
         <AppInput v-model="form.first_name" :disabled="isSaving" />
       </AppField>
       <AppField :label="t('contacts.fields.last_name')" name="last_name">
@@ -34,10 +34,10 @@
         <AppInput v-model="form.lead_source" :disabled="isSaving" />
       </AppField>
       <AppField :label="t('contacts.fields.status')" name="status">
-        <USelect v-model="form.status" :options="statusOptions" :disabled="isSaving" />
+        <USelect v-model="form.status" :items="statusOptions" :disabled="isSaving" class="w-full" />
       </AppField>
       <AppField :label="t('contacts.fields.lifecycle_stage')" name="lifecycle_stage">
-        <USelect v-model="form.lifecycle_stage" :options="lifecycleOptions" :disabled="isSaving" />
+        <USelect v-model="form.lifecycle_stage" :items="lifecycleOptions" :disabled="isSaving" class="w-full" />
       </AppField>
       <AppField :label="t('contacts.fields.city')" name="city">
         <AppInput v-model="form.city" :disabled="isSaving" />
@@ -47,14 +47,14 @@
       </AppField>
     </div>
     <AppField :label="t('contacts.fields.description')" name="description">
-      <UTextarea v-model="form.description" :rows="3" :disabled="isSaving" />
+      <UTextarea v-model="form.description" :rows="3" :disabled="isSaving" class="w-full" />
     </AppField>
 
     <div class="flex justify-end gap-3">
-      <AppButton color="gray" variant="outline" :disabled="isSaving" @click="emit('cancel')">
+      <AppButton color="neutral" variant="outline" :disabled="isSaving" @click="emit('cancel')">
         {{ t('common.cancel') }}
       </AppButton>
-      <AppButton type="submit" color="violet" :loading="isSaving">
+      <AppButton type="submit" color="primary" :loading="isSaving">
         {{ isSaving ? t('contacts.submitting') : t('common.save') }}
       </AppButton>
     </div>

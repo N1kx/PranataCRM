@@ -4,7 +4,7 @@
     <div class="flex items-center gap-3">
       <UButton
         icon="i-lucide-arrow-left"
-        color="gray"
+        color="neutral"
         variant="ghost"
         to="/app/contacts"
         :aria-label="t('contacts.back_to_list')"
@@ -27,7 +27,7 @@ const { t } = useI18n()
 const toast = useToast()
 
 async function onSaved() {
-  toast.add({ title: t('contacts.created'), color: 'green', icon: 'i-lucide-check-circle' })
+  toast.add({ title: t('contacts.created'), color: 'success', icon: 'i-lucide-check-circle' })
   await navigateTo('/app/contacts')
 }
 </script>

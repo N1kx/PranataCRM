@@ -5,7 +5,7 @@
       <div class="flex items-center gap-3">
         <UButton
           icon="i-lucide-arrow-left"
-          color="gray"
+          color="neutral"
           variant="ghost"
           to="/app/contacts"
           :aria-label="t('contacts.back_to_list')"
@@ -20,7 +20,7 @@
       <!-- Later gated by write permission once RBAC lands -->
       <AppButton
         v-if="contact"
-        color="violet"
+        color="primary"
         icon="i-lucide-pencil"
         @click="navigateTo(`/app/contacts/${contact.id}/edit`)"
       >
@@ -31,13 +31,13 @@
     <!-- Error state -->
     <UAlert
       v-if="loadErrorCode"
-      color="red"
+      color="error"
       variant="soft"
       icon="i-lucide-circle-alert"
       :title="t(`error.${loadErrorCode}`, t('common.error_state'))"
     >
       <template #description>
-        <AppButton color="red" variant="outline" size="xs" class="mt-2" @click="loadContact">
+        <AppButton color="error" variant="outline" size="xs" class="mt-2" @click="loadContact">
           {{ t('common.retry') }}
         </AppButton>
       </template>

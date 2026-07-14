@@ -26,7 +26,7 @@
       <template v-else>
         <UAlert
           v-if="errorMsg"
-          color="red"
+          color="error"
           variant="soft"
           :description="errorMsg"
           class="mb-4"
@@ -60,7 +60,7 @@
             />
           </AppField>
 
-          <AppButton type="submit" block color="violet" :loading="isLoading">
+          <AppButton type="submit" block color="primary" :loading="isLoading">
             {{ isLoading ? t('auth.invite.submitting') : t('auth.invite.submit') }}
           </AppButton>
         </UForm>

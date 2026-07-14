@@ -1,12 +1,12 @@
 <template>
-  <UDropdown :items="items" :ui="{ item: { padding: 'px-3 py-2' } }">
+  <UDropdownMenu :items="items" :ui="{ item: 'px-3 py-2' }">
     <UButton
       :icon="activeIcon"
-      color="gray"
+      color="neutral"
       variant="ghost"
       :aria-label="t('theme.label')"
     />
-  </UDropdown>
+  </UDropdownMenu>
 </template>
 
 <script setup lang="ts">
@@ -30,7 +30,7 @@ const items = computed(() => [
     icon: o.icon,
     // A trailing check marks the active preference.
     trailingIcon: colorMode.preference === o.value ? 'i-lucide-check' : undefined,
-    click: () => { colorMode.preference = o.value },
+    onSelect: () => { colorMode.preference = o.value },
   })),
 ])
 </script>

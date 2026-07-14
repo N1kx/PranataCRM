@@ -10,7 +10,8 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@nuxt/ui": "^2.21.0",
+    "@iconify-json/lucide": "^1.2.117",
+    "@nuxt/ui": "^4.9.0",
     "@nuxtjs/i18n": "^10.4.0",
     "@pinia/nuxt": "^0.5.5",
     "@vee-validate/zod": "^4.15.0",
@@ -22,6 +23,7 @@
     "zod": "^3.25.64"
   },
   "devDependencies": {
+    "@types/node": "^26.1.1",
     "typescript": "^5.8.3",
     "vue-tsc": "^2.2.10"
   }

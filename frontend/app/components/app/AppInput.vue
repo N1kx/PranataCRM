@@ -5,7 +5,7 @@
     :type="type"
     :placeholder="placeholder"
     :disabled="disabled"
-    :ui="{ base: 'w-full' }"
+    :ui="{ root: 'w-full', base: 'w-full' }"
     @update:model-value="$emit('update:modelValue', $event)"
   />
 </template>
