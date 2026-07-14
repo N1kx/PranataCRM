@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db as get_session
@@ -166,7 +166,9 @@ async def search_users(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
     auth: Annotated[AuthUseCase, Depends(get_auth_usecase)],
     q: str = "",
-    limit: int = 20,
+    # Bounded at the edge so a crafted value (e.g. -1 -> SQL "LIMIT -1", which
+    # Postgres rejects) can't reach the query and 500 the endpoint.
+    limit: int = Query(default=20, ge=1, le=50),
 ) -> list[UserSummary]:
     return await auth.search_users(current_user.tenant_id, q, limit)
 

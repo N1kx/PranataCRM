@@ -145,14 +145,17 @@ async function loadContacts() {
     const res = await list(page.value, pageSize)
     items.value = res.items
     total.value = res.total
-    await loadOwnerNames(res.items)
   }
   catch {
     loadError.value = true
+    return
   }
   finally {
     isLoading.value = false
   }
+  // Owner names are a secondary enrichment: resolve them separately so a lookup
+  // failure degrades to "-" instead of blanking the whole (already loaded) list.
+  await loadOwnerNames(items.value)
 }
 
 async function loadOwnerNames(contacts: Contact[]) {
@@ -161,11 +164,16 @@ async function loadOwnerNames(contacts: Contact[]) {
     ownerNames.value = {}
     return
   }
-  const owners = await lookup(ids)
-  ownerNames.value = owners.reduce<Record<string, string>>((acc, o) => {
-    acc[o.id] = o.full_name
-    return acc
-  }, {})
+  try {
+    const owners = await lookup(ids)
+    ownerNames.value = owners.reduce<Record<string, string>>((acc, o) => {
+      acc[o.id] = o.full_name
+      return acc
+    }, {})
+  }
+  catch {
+    ownerNames.value = {}
+  }
 }
 
 onMounted(loadContacts)

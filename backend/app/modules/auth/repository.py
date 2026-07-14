@@ -81,9 +81,13 @@ class AuthRepository:
         )
         q = (query or "").strip()
         if q:
-            like = f"%{q.lower()}%"
+            # Escape LIKE wildcards so a term such as "50%" or "a_b" matches those
+            # characters literally instead of acting as a pattern.
+            escaped = q.lower().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            like = f"%{escaped}%"
             stmt = stmt.where(
-                func.lower(User.full_name).like(like) | func.lower(User.email).like(like)
+                func.lower(User.full_name).like(like, escape="\\")
+                | func.lower(User.email).like(like, escape="\\")
             )
         stmt = stmt.order_by(User.full_name).limit(limit)
         result = await self._session.execute(stmt)

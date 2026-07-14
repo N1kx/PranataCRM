@@ -1,8 +1,9 @@
 import uuid
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from tests.auth.base import AuthTestCase
+from tests.common import make_mock_session
 
 
 def _fake_user(
@@ -112,6 +113,57 @@ class UsersSearchTests(AuthTestCase):
         resp = await self.client.get("/api/v1/users/search", params={"q": "x"})
         self.assertEqual(resp.status_code, 401)
         self.assertEqual(resp.json()["error"]["code"], "AUTH_NOT_AUTHENTICATED")
+
+    @patch("app.modules.auth.repository.AuthRepository.search_users", new_callable=AsyncMock)
+    async def test_search_negative_limit_rejected(self, mock_search):
+        # A negative limit would compile to SQL "LIMIT -1", which Postgres rejects
+        # with a 500. It must be rejected at the edge as a 422 and never reach the
+        # repository.
+        mock_search.return_value = []
+        self._override_current_user()
+        try:
+            resp = await self.client.get(
+                "/api/v1/users/search", params={"q": "x", "limit": -1},
+            )
+        finally:
+            self._clear_override()
+
+        self.assertEqual(resp.status_code, 422)
+        mock_search.assert_not_called()
+
+    @patch("app.modules.auth.repository.AuthRepository.search_users", new_callable=AsyncMock)
+    async def test_search_limit_above_max_rejected(self, mock_search):
+        mock_search.return_value = []
+        self._override_current_user()
+        try:
+            resp = await self.client.get(
+                "/api/v1/users/search", params={"q": "x", "limit": 999},
+            )
+        finally:
+            self._clear_override()
+
+        self.assertEqual(resp.status_code, 422)
+        mock_search.assert_not_called()
+
+    async def test_search_escapes_like_wildcards(self):
+        # A term containing LIKE wildcards must be escaped so it matches those
+        # characters literally instead of acting as a pattern.
+        from app.modules.auth.repository import AuthRepository
+
+        session = make_mock_session()
+        result_obj = MagicMock()
+        result_obj.scalars.return_value.all.return_value = []
+        session.execute.return_value = result_obj
+
+        repo = AuthRepository(session)
+        await repo.search_users(uuid.uuid4(), "50%_x", 20)
+
+        stmt = session.execute.call_args.args[0]
+        params = stmt.compile().params
+        self.assertTrue(
+            any(isinstance(v, str) and v == "%50\\%\\_x%" for v in params.values()),
+            f"expected escaped LIKE pattern in {params}",
+        )
 
     @patch("app.modules.auth.repository.AuthRepository.get_users_by_ids", new_callable=AsyncMock)
     async def test_lookup_returns_matching_summaries(self, mock_lookup):

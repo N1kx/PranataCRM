@@ -44,17 +44,24 @@ const searchTerm = ref('')
 const isLoading = ref(false)
 
 let debounceHandle: ReturnType<typeof setTimeout> | undefined
+// Monotonic token so a slow earlier request can't overwrite a newer one's
+// results if it resolves out of order.
+let searchSeq = 0
 
 async function runSearch(q: string) {
+  const seq = ++searchSeq
   isLoading.value = true
   try {
-    items.value = await search(q)
+    const results = await search(q)
+    if (seq !== searchSeq) return
+    items.value = results
   }
   catch {
+    if (seq !== searchSeq) return
     items.value = []
   }
   finally {
-    isLoading.value = false
+    if (seq === searchSeq) isLoading.value = false
   }
 }
 
