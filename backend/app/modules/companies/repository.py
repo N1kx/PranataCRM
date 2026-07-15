@@ -1,3 +1,10 @@
+# Postponed evaluation of annotations: this class defines a method named
+# `list`, which shadows the builtin `list` inside the class body for any
+# annotation written after it (e.g. `-> list[Company]` on a later method
+# would resolve `list` to the method itself, not the builtin, and crash at
+# import time). Deferring annotation evaluation avoids that entirely.
+from __future__ import annotations
+
 import uuid
 
 from sqlalchemy import func, or_, select
@@ -87,6 +94,37 @@ class CompanyRepository:
             select(func.count()).select_from(Company).where(*filters)
         )
         return list(items_result.scalars().all()), total_result.scalar_one()
+
+    async def search(
+        self, tenant_id: uuid.UUID, query: str, limit: int = 20
+    ) -> list[Company]:
+        stmt = select(Company).where(
+            Company.tenant_id == tenant_id,
+            Company.status == "active",
+        )
+        q = (query or "").strip()
+        if q:
+            # Escape LIKE wildcards so a term such as "50%" or "a_b" matches
+            # those characters literally instead of acting as a pattern.
+            escaped = q.lower().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            like = f"%{escaped}%"
+            stmt = stmt.where(
+                func.lower(Company.name).like(like, escape="\\")
+                | func.lower(Company.domain).like(like, escape="\\")
+            )
+        stmt = stmt.order_by(Company.name).limit(limit)
+        result = await self._session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_by_ids(
+        self, tenant_id: uuid.UUID, ids: list[uuid.UUID]
+    ) -> list[Company]:
+        if not ids:
+            return []
+        result = await self._session.execute(
+            select(Company).where(Company.tenant_id == tenant_id, Company.id.in_(ids))
+        )
+        return list(result.scalars().all())
 
     async def update(self, company: Company, data: dict) -> Company:
         for key, value in data.items():

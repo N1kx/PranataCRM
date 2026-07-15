@@ -252,3 +252,10 @@ class CompanyListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class CompanySummary(BaseModel):
+    """Lightweight shape for the company_id autocomplete picker (search/lookup)."""
+    id: str
+    name: str
+    domain: str | None = None

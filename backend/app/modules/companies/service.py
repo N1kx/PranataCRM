@@ -7,6 +7,7 @@ from app.modules.companies.schemas import (
     CompanyCreate,
     CompanyListResponse,
     CompanyResponse,
+    CompanySummary,
     CompanyUpdate,
 )
 
@@ -94,6 +95,22 @@ class CompanyService:
         if company is None:
             raise CompanyNotFound()
         await self._repo.delete(company)
+
+    async def search_companies(
+        self, tenant_id: uuid.UUID, query: str, limit: int = 20
+    ) -> list[CompanySummary]:
+        rows = await self._repo.search(tenant_id, query, min(limit, 50))
+        return [self._to_summary(c) for c in rows]
+
+    async def lookup_companies(
+        self, tenant_id: uuid.UUID, ids: list[uuid.UUID]
+    ) -> list[CompanySummary]:
+        rows = await self._repo.get_by_ids(tenant_id, ids[:100])
+        return [self._to_summary(c) for c in rows]
+
+    @staticmethod
+    def _to_summary(company: Company) -> CompanySummary:
+        return CompanySummary(id=str(company.id), name=company.name, domain=company.domain)
 
     @staticmethod
     def _to_response(company: Company) -> CompanyResponse:

@@ -12,6 +12,7 @@ from app.modules.companies.schemas import (
     CompanyCreate,
     CompanyListResponse,
     CompanyResponse,
+    CompanySummary,
     CompanyUpdate,
 )
 from app.modules.companies.service import CompanyService
@@ -98,6 +99,38 @@ async def list_companies(
         sort=sort,
         order=order,
     )
+
+
+@router.get("/search", response_model=list[CompanySummary])
+async def search_companies(
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+    q: str = "",
+    # Bounded at the edge so a crafted value (e.g. -1 -> SQL "LIMIT -1", which
+    # Postgres rejects) can't reach the query and 500 the endpoint.
+    limit: int = Query(default=20, ge=1, le=50),
+) -> list[CompanySummary]:
+    service = CompanyService(CompanyRepository(session))
+    return await service.search_companies(current_user.tenant_id, q, limit)
+
+
+@router.get("/lookup", response_model=list[CompanySummary])
+async def lookup_companies(
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+    ids: str = "",
+) -> list[CompanySummary]:
+    parsed = []
+    for x in ids.split(","):
+        x = x.strip()
+        if not x:
+            continue
+        try:
+            parsed.append(uuid.UUID(x))
+        except ValueError:
+            continue
+    service = CompanyService(CompanyRepository(session))
+    return await service.lookup_companies(current_user.tenant_id, parsed)
 
 
 @router.get("/{company_id}", response_model=CompanyResponse)
