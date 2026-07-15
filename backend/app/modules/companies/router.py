@@ -85,6 +85,8 @@ async def list_companies(
         except ValueError:
             raise CompanyQueryValidationError("owner_id must be a valid UUID.")
 
+    industry = industry.strip() or None if industry is not None else None
+
     return await companies.list_companies(
         current_user.tenant_id,
         page,

@@ -9,6 +9,15 @@ class CompanyNotFound(AppException):
     message = "Company not found."
 
 
+class InvalidOwnerReference(AppException):
+    # 422, not 404: the client sent a syntactically-valid owner_id, but it
+    # doesn't resolve to a real user in the caller's tenant — a request
+    # validation problem, the same class of error as a bad enum value.
+    status_code = 422
+    error_code = "INVALID_OWNER_REFERENCE"
+    message = "owner_id does not reference an existing user."
+
+
 class CompanyQueryValidationError(AppException):
     """Invalid GET /companies query parameter (e.g. bad enum, UUID, or sort field).
 

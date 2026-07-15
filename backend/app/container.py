@@ -18,6 +18,7 @@ from app.modules.companies.use_case import CompanyUseCase
 from app.modules.contacts.repository import ContactRepository
 from app.modules.contacts.service import ContactService
 from app.modules.contacts.use_case import ContactUseCase
+from app.shared.contracts.auth_contract import AuthContractProtocol
 from app.shared.contracts.company_contract import CompanyContractProtocol
 
 
@@ -29,8 +30,9 @@ async def get_auth_usecase(
 
 async def get_company_usecase(
     session: Annotated[AsyncSession, Depends(get_session)],
+    auth: Annotated[AuthContractProtocol, Depends(get_auth_usecase)],
 ) -> CompanyUseCase:
-    return CompanyUseCase(CompanyService(CompanyRepository(session)))
+    return CompanyUseCase(CompanyService(CompanyRepository(session)), auth)
 
 
 async def get_contact_usecase(

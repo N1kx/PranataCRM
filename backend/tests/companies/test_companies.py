@@ -486,6 +486,28 @@ class CompaniesTests(CompaniesTestCase):
         self.assertEqual(kwargs["sort"], "employee_count")
         self.assertEqual(kwargs["order"], "asc")
 
+    @patch("app.modules.companies.repository.CompanyRepository.list", new_callable=AsyncMock)
+    async def test_list_companies_trims_industry_whitespace(self, mock_list):
+        mock_list.return_value = ([], 0)
+        app = self._override_current_user()
+        try:
+            resp = await self.client.get("/api/v1/companies?industry=%20Tech%20")
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(mock_list.call_args.kwargs["industry"], "Tech")
+
+    @patch("app.modules.companies.repository.CompanyRepository.list", new_callable=AsyncMock)
+    async def test_list_companies_blank_industry_is_treated_as_omitted(self, mock_list):
+        mock_list.return_value = ([], 0)
+        app = self._override_current_user()
+        try:
+            resp = await self.client.get("/api/v1/companies?industry=%20%20")
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 200)
+        self.assertIsNone(mock_list.call_args.kwargs["industry"])
+
     async def test_list_companies_without_auth_returns_401(self):
         resp = await self.client.get("/api/v1/companies")
         self.assertEqual(resp.status_code, 401)

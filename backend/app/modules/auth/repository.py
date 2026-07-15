@@ -42,6 +42,12 @@ class AuthRepository:
         )
         return result.scalar_one_or_none()
 
+    async def user_exists_in_tenant(self, tenant_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+        result = await self._session.execute(
+            select(User.id).where(User.tenant_id == tenant_id, User.id == user_id)
+        )
+        return result.scalar_one_or_none() is not None
+
     async def create_user(
         self,
         *,

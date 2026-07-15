@@ -1,5 +1,6 @@
 import uuid
 
+from app.modules.companies.exceptions import InvalidOwnerReference
 from app.modules.companies.schemas import (
     CompanyCreate,
     CompanyListResponse,
@@ -8,19 +9,30 @@ from app.modules.companies.schemas import (
     CompanyUpdate,
 )
 from app.modules.companies.service import CompanyService
+from app.shared.contracts.auth_contract import AuthContractProtocol
 
 
 class CompanyUseCase:
     """Implements CompanyContractProtocol. Entry point for the companies module —
     both its own router and other modules (e.g. contacts, for company_id
-    validation) call in through here, never through CompanyService directly."""
+    validation) call in through here, never through CompanyService directly.
+    Depends on AuthContractProtocol (not the concrete auth module) to validate
+    an owner_id reference."""
 
-    def __init__(self, service: CompanyService) -> None:
+    def __init__(self, service: CompanyService, auth: AuthContractProtocol) -> None:
         self._service = service
+        self._auth = auth
+
+    async def _validate_owner_id(self, tenant_id: uuid.UUID, owner_id: str | None) -> None:
+        if owner_id is None:
+            return
+        if not await self._auth.user_exists(tenant_id, uuid.UUID(owner_id)):
+            raise InvalidOwnerReference()
 
     async def create_company(
         self, tenant_id: uuid.UUID, actor_id: uuid.UUID, payload: CompanyCreate
     ) -> CompanyResponse:
+        await self._validate_owner_id(tenant_id, payload.owner_id)
         return await self._service.create_company(tenant_id, actor_id, payload)
 
     async def get_company(
@@ -67,6 +79,8 @@ class CompanyUseCase:
         actor_id: uuid.UUID,
         payload: CompanyUpdate,
     ) -> CompanyResponse:
+        if "owner_id" in payload.model_fields_set:
+            await self._validate_owner_id(tenant_id, payload.owner_id)
         return await self._service.update_company(tenant_id, company_id, actor_id, payload)
 
     async def delete_company(self, tenant_id: uuid.UUID, company_id: uuid.UUID) -> None:

@@ -53,6 +53,9 @@ class AuthUseCase:
     async def get_me(self, user_id: uuid.UUID) -> MeResponse:
         return await self._service.get_me(user_id)
 
+    async def user_exists(self, tenant_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+        return await self._service.user_exists(tenant_id, user_id)
+
     async def search_users(
         self, tenant_id: uuid.UUID, query: str, limit: int = 20
     ) -> list[UserSummary]:
