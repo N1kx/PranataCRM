@@ -41,10 +41,32 @@ class ContactService:
         return self._to_response(contact)
 
     async def list_contacts(
-        self, tenant_id: uuid.UUID, page: int, page_size: int
+        self,
+        tenant_id: uuid.UUID,
+        page: int,
+        page_size: int,
+        *,
+        status: str | None = None,
+        lifecycle_stage: str | None = None,
+        owner_id: uuid.UUID | None = None,
+        company_id: uuid.UUID | None = None,
+        q: str | None = None,
+        sort: str = "created_at",
+        order: str = "desc",
     ) -> ContactListResponse:
         offset = (page - 1) * page_size
-        items, total = await self._repo.list(tenant_id, page_size, offset)
+        items, total = await self._repo.list(
+            tenant_id,
+            page_size,
+            offset,
+            status=status,
+            lifecycle_stage=lifecycle_stage,
+            owner_id=owner_id,
+            company_id=company_id,
+            q=q,
+            sort=sort,
+            order=order,
+        )
         return ContactListResponse(
             items=[self._to_response(c) for c in items],
             total=total,
