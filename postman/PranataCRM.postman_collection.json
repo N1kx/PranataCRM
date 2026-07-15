@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "d3f2b1a0-5a4a-4a1a-9c0a-1a2b3c4d5e6f",
     "name": "PranataCRM API",
-    "description": "Auth + Users + Contacts endpoints for PranataCRM.\n\nUse the \"PranataCRM Local\" environment alongside this collection. Auth cookies (access_token/refresh_token), the dev-mode X-Tenant-Slug header, and IDs produced along the way (tenant_id, user_id, contact_id) are captured and re-injected automatically by the collection's pre-request/test scripts — no manual copy-paste needed.\n\nSuggested run order: Register Tenant -> Login -> (everything else). Re-running \"Register Tenant\" always creates a brand-new tenant/user (unique slug/email per run), so the whole collection can be run repeatedly (including via Newman/CI) without 409 conflicts.\n\nTwo requests need one manual value because the backend has no endpoint to list them yet:\n- Create User / Invite User need `role_id` (a Role UUID). Look one up in the `roles` table for your tenant (the tenant's \"Administrator\" role is auto-created on registration) and set the `role_id` environment variable.\n- Accept Invite needs `invite_token` (the JWT emailed to the invitee). Paste it from the email/logs into the `invite_token` environment variable.",
+    "description": "Auth + Users + Contacts + Companies endpoints for PranataCRM.\n\nUse the \"PranataCRM Local\" environment alongside this collection. Auth cookies (access_token/refresh_token), the dev-mode X-Tenant-Slug header, and IDs produced along the way (tenant_id, user_id, contact_id, company_id) are captured and re-injected automatically by the collection's pre-request/test scripts — no manual copy-paste needed.\n\nSuggested run order: Register Tenant -> Login -> (everything else). Re-running \"Register Tenant\" always creates a brand-new tenant/user (unique slug/email per run), so the whole collection can be run repeatedly (including via Newman/CI) without 409 conflicts.\n\nTwo requests need one manual value because the backend has no endpoint to list them yet:\n- Create User / Invite User need `role_id` (a Role UUID). Look one up in the `roles` table for your tenant (the tenant's \"Administrator\" role is auto-created on registration) and set the `role_id` environment variable.\n- Accept Invite needs `invite_token` (the JWT emailed to the invitee). Paste it from the email/logs into the `invite_token` environment variable.\n\nSearch Users / Lookup Users and Search Companies / Lookup Companies are the autocomplete endpoints behind the owner_id and company_id pickers on the frontend — they return a lightweight summary shape (id + a couple of display fields), not the full resource.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -60,7 +60,10 @@
     }
   ],
   "variable": [
-    { "key": "base_url", "value": "http://localhost:8000/api/v1" }
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    }
   ],
   "item": [
     {
@@ -104,17 +107,29 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"full_name\": \"{{test_full_name}}\",\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"organization_name\": \"{{organization_name}}\",\n  \"slug\": \"{{tenant_slug}}\",\n  \"industry\": \"{{industry}}\",\n  \"team_size\": \"{{team_size}}\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/auth/register-tenant",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "register-tenant"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register-tenant"
+              ]
             },
             "description": "Creates a brand-new tenant + owner user. Does NOT log in automatically. Run Login next."
           }
@@ -141,17 +156,29 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             },
             "description": "Uses the dev-mode X-Tenant-Slug header (auto-injected from the tenant_slug variable) instead of a real subdomain. On success, access_token/refresh_token cookies are captured automatically by the collection-level test script."
           }
@@ -177,8 +204,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/auth/me",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "me"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
             },
             "description": "Session-restore endpoint — resolves the current user purely from the access_token cookie."
           }
@@ -206,17 +238,28 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"full_name\": \"{{invite_full_name}}\",\n  \"email\": \"{{invite_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"role_id\": \"{{role_id}}\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/users",
-              "host": ["{{base_url}}"],
-              "path": ["users"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users"
+              ]
             },
             "description": "Requires tenant_owner/tenant_admin (Login as the tenant owner first). MANUAL STEP: set the role_id environment variable to a Role UUID for this tenant (there is no roles-list endpoint yet)."
           }
@@ -239,19 +282,111 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{invite_email}}\",\n  \"full_name\": \"{{invite_full_name}}\",\n  \"role_id\": \"{{role_id}}\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/users/invite",
-              "host": ["{{base_url}}"],
-              "path": ["users", "invite"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "invite"
+              ]
             },
             "description": "Requires tenant_owner/tenant_admin. Sends a real invite email via Resend (needs RESEND_API_KEY configured) containing the JWT used by Accept Invite. Also needs the role_id environment variable set."
+          }
+        },
+        {
+          "name": "Search Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Search returns an array', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/search?q={{test_full_name}}&limit=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{test_full_name}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Autocomplete source for the owner_id picker. Matches name/email (case-insensitive), tenant-scoped, active users only. q defaults to empty (returns the first N users); limit is capped 1-50 server-side."
+          }
+        },
+        {
+          "name": "Lookup Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Lookup returns an array', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/lookup?ids={{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "lookup"
+              ],
+              "query": [
+                {
+                  "key": "ids",
+                  "value": "{{user_id}}"
+                }
+              ]
+            },
+            "description": "Batch-resolves owner_id values already saved on a record (e.g. a contact) back to display names. ids is a comma-separated list of UUIDs; unparseable ids are skipped rather than erroring."
           }
         }
       ]
@@ -281,17 +416,28 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"first_name\": \"Ada\",\n  \"last_name\": \"Lovelace\",\n  \"email\": \"ada.lovelace@example.com\",\n  \"status\": \"lead\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/contacts",
-              "host": ["{{base_url}}"],
-              "path": ["contacts"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "contacts"
+              ]
             },
             "description": "Requires login. The created contact's id is captured into the contact_id variable for the Get/Update/Delete requests below."
           }
@@ -317,11 +463,21 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/contacts?page=1&page_size=20",
-              "host": ["{{base_url}}"],
-              "path": ["contacts"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "contacts"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "page_size", "value": "20" }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
               ]
             },
             "description": "Paginated, tenant-scoped list. page_size is capped at 100 server-side."
@@ -347,8 +503,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/contacts/{{contact_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["contacts", "{{contact_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "contacts",
+                "{{contact_id}}"
+              ]
             },
             "description": "Uses contact_id captured from Create Contact. Returns 404 (not 403) if the contact belongs to another tenant."
           }
@@ -371,17 +532,29 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"job_title\": \"Mathematician\",\n  \"status\": \"qualified\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/contacts/{{contact_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["contacts", "{{contact_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "contacts",
+                "{{contact_id}}"
+              ]
             },
             "description": "Partial update — only send the fields you want to change."
           }
@@ -410,10 +583,353 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/contacts/{{contact_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["contacts", "{{contact_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "contacts",
+                "{{contact_id}}"
+              ]
             },
             "description": "Clears the contact_id variable on success."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Companies",
+      "item": [
+        {
+          "name": "Create Company",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Company created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    pm.environment.set('company_id', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Analytical Engines Ltd\",\n  \"phone\": \"+44 20 7946 0958\",\n  \"country\": \"United Kingdom\",\n  \"company_type\": \"prospect\",\n  \"industry\": \"Technology\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/companies",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "companies"
+              ]
+            },
+            "description": "Requires login. name, phone, and country are mandatory on create (business rule, not a DB constraint) — omitting any of them 422s. The created company's id is captured into the company_id variable for the Get/Update/Delete/Lookup requests below."
+          }
+        },
+        {
+          "name": "List Companies",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Lists companies', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.have.property('items');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/companies?page=1&page_size=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "companies"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Paginated, tenant-scoped list. page_size is capped at 100 server-side. Also supports filter/sort/search query params — see List Companies (filtered) below."
+          }
+        },
+        {
+          "name": "List Companies (filtered/sorted/searched)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Lists companies with filters applied', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.have.property('items');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/companies?status=active&company_type=prospect&q=Analytical&sort=name&order=asc",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "companies"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "active"
+                },
+                {
+                  "key": "company_type",
+                  "value": "prospect"
+                },
+                {
+                  "key": "q",
+                  "value": "Analytical"
+                },
+                {
+                  "key": "sort",
+                  "value": "name"
+                },
+                {
+                  "key": "order",
+                  "value": "asc"
+                }
+              ]
+            },
+            "description": "Demonstrates the filter/sort/search query params: status, company_type, size, industry, owner_id (exact-match filters, AND semantics), q (case-insensitive search across name/legal_name/domain/email), sort (allowlisted columns only) + order. An invalid value for any of these returns 422 with the allowed values listed."
+          }
+        },
+        {
+          "name": "Get Company",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns the company', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/companies/{{company_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "companies",
+                "{{company_id}}"
+              ]
+            },
+            "description": "Uses company_id captured from Create Company. Returns 404 (not 403) if the company belongs to another tenant."
+          }
+        },
+        {
+          "name": "Update Company",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Company updated', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"industry\": \"Computing\",\n  \"employee_count\": 12\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/companies/{{company_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "companies",
+                "{{company_id}}"
+              ]
+            },
+            "description": "Partial update — only send the fields you want to change. name/phone/country stay mandatory if included: sending null or a blank string for any of them 422s, but omitting them entirely is fine."
+          }
+        },
+        {
+          "name": "Search Companies",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Search returns an array', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/companies/search?q=Analytical&limit=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "companies",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Analytical"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Autocomplete source for the company_id picker on the contact form. Matches name/domain (case-insensitive), tenant-scoped, active companies only. q defaults to empty (returns the first N companies); limit is capped 1-50 server-side."
+          }
+        },
+        {
+          "name": "Lookup Companies",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Lookup returns an array', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/companies/lookup?ids={{company_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "companies",
+                "lookup"
+              ],
+              "query": [
+                {
+                  "key": "ids",
+                  "value": "{{company_id}}"
+                }
+              ]
+            },
+            "description": "Batch-resolves company_id values already saved on a contact back to display labels. ids is a comma-separated list of UUIDs; unparseable ids are skipped rather than erroring."
+          }
+        },
+        {
+          "name": "Delete Company",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Company deleted', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.environment.set('company_id', '');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/companies/{{company_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "companies",
+                "{{company_id}}"
+              ]
+            },
+            "description": "Clears the company_id variable on success."
           }
         }
       ]
@@ -445,17 +961,29 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"token\": \"{{invite_token}}\",\n  \"full_name\": \"{{invite_full_name}}\",\n  \"password\": \"{{test_password}}\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/auth/accept-invite",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "accept-invite"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "accept-invite"
+              ]
             },
             "description": "MANUAL STEP REQUIRED: set the invite_token environment variable to the JWT sent by the \"Invite User\" request's email (or read it from the backend logs) before running this. Without it, this intentionally returns 400 and the test is skipped rather than failed."
           }
@@ -483,8 +1011,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/auth/logout",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "logout"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
             },
             "description": "Revokes the refresh token and clears the captured access_token/refresh_token variables. Placed last on purpose — run this only when you're done testing."
           }
