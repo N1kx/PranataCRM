@@ -138,7 +138,12 @@ class _CompanyFieldsMixin(BaseModel):
 
 
 class CompanyCreate(_CompanyFieldsMixin):
+    # name/phone/country are optional at the DB/model level (unchanged), but
+    # required specifically on create so every new company has a minimum
+    # useful profile — enforced here, not via a schema change.
     name: str = Field(min_length=1, max_length=255)
+    phone: str = Field(min_length=1, max_length=50)
+    country: str = Field(min_length=1, max_length=100)
 
     @field_validator("name", mode="before")
     @classmethod
@@ -147,6 +152,24 @@ class CompanyCreate(_CompanyFieldsMixin):
             v = v.strip()
         if not v:
             raise ValueError("name must be between 1 and 255 characters.")
+        return v
+
+    @field_validator("phone", mode="before")
+    @classmethod
+    def _trim_required_phone(cls, v: str) -> str:
+        _reject_null("phone", v)
+        v = v.strip() if isinstance(v, str) else v
+        if not v:
+            raise ValueError("phone is required.")
+        return v
+
+    @field_validator("country", mode="before")
+    @classmethod
+    def _trim_required_country(cls, v: str) -> str:
+        _reject_null("country", v)
+        v = v.strip() if isinstance(v, str) else v
+        if not v:
+            raise ValueError("country is required.")
         return v
 
 

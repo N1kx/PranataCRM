@@ -76,13 +76,19 @@ class CompaniesTests(CompaniesTestCase):
 
     # ── create ────────────────────────────────────────────────────────────────
 
+    # name/phone/country are required on create (business rule, not a DB
+    # constraint) - every other create test includes them so a 422 there
+    # is unambiguously about the field under test, not a missing required field.
+    _REQUIRED_CREATE_FIELDS = {"phone": "+62 812-0000-0000", "country": "Indonesia"}
+
     @patch("app.modules.companies.repository.CompanyRepository.create", new_callable=AsyncMock)
     async def test_create_company_success(self, mock_create):
         mock_create.return_value = _fake_company(self._company_id, self._tenant_id)
         app = self._override_current_user()
         try:
             resp = await self.client.post(
-                "/api/v1/companies", json={"name": "Acme Corp"}
+                "/api/v1/companies",
+                json={"name": "Acme Corp", **self._REQUIRED_CREATE_FIELDS},
             )
         finally:
             self._clear_override(app)
@@ -99,7 +105,74 @@ class CompaniesTests(CompaniesTestCase):
     async def test_create_company_blank_name_returns_422(self):
         app = self._override_current_user()
         try:
-            resp = await self.client.post("/api/v1/companies", json={"name": "   "})
+            resp = await self.client.post(
+                "/api/v1/companies",
+                json={"name": "   ", **self._REQUIRED_CREATE_FIELDS},
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
+
+    async def test_create_company_missing_phone_returns_422(self):
+        app = self._override_current_user()
+        try:
+            resp = await self.client.post(
+                "/api/v1/companies", json={"name": "Acme", "country": "Indonesia"}
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
+
+    async def test_create_company_blank_phone_returns_422(self):
+        app = self._override_current_user()
+        try:
+            resp = await self.client.post(
+                "/api/v1/companies",
+                json={"name": "Acme", "phone": "   ", "country": "Indonesia"},
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
+
+    async def test_create_company_null_phone_returns_422(self):
+        app = self._override_current_user()
+        try:
+            resp = await self.client.post(
+                "/api/v1/companies",
+                json={"name": "Acme", "phone": None, "country": "Indonesia"},
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
+
+    async def test_create_company_missing_country_returns_422(self):
+        app = self._override_current_user()
+        try:
+            resp = await self.client.post(
+                "/api/v1/companies", json={"name": "Acme", "phone": "0812"}
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
+
+    async def test_create_company_blank_country_returns_422(self):
+        app = self._override_current_user()
+        try:
+            resp = await self.client.post(
+                "/api/v1/companies",
+                json={"name": "Acme", "phone": "0812", "country": "  "},
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
+
+    async def test_create_company_null_country_returns_422(self):
+        app = self._override_current_user()
+        try:
+            resp = await self.client.post(
+                "/api/v1/companies",
+                json={"name": "Acme", "phone": "0812", "country": None},
+            )
         finally:
             self._clear_override(app)
         self.assertEqual(resp.status_code, 422)
@@ -108,7 +181,11 @@ class CompaniesTests(CompaniesTestCase):
         app = self._override_current_user()
         try:
             resp = await self.client.post(
-                "/api/v1/companies", json={"name": "Acme", "company_type": "bogus"}
+                "/api/v1/companies",
+                json={
+                    "name": "Acme", "company_type": "bogus",
+                    **self._REQUIRED_CREATE_FIELDS,
+                },
             )
         finally:
             self._clear_override(app)
@@ -118,7 +195,10 @@ class CompaniesTests(CompaniesTestCase):
         app = self._override_current_user()
         try:
             resp = await self.client.post(
-                "/api/v1/companies", json={"name": "Acme", "status": "bogus"}
+                "/api/v1/companies",
+                json={
+                    "name": "Acme", "status": "bogus", **self._REQUIRED_CREATE_FIELDS,
+                },
             )
         finally:
             self._clear_override(app)
@@ -128,7 +208,8 @@ class CompaniesTests(CompaniesTestCase):
         app = self._override_current_user()
         try:
             resp = await self.client.post(
-                "/api/v1/companies", json={"name": "Acme", "size": "bogus"}
+                "/api/v1/companies",
+                json={"name": "Acme", "size": "bogus", **self._REQUIRED_CREATE_FIELDS},
             )
         finally:
             self._clear_override(app)
@@ -138,7 +219,11 @@ class CompaniesTests(CompaniesTestCase):
         app = self._override_current_user()
         try:
             resp = await self.client.post(
-                "/api/v1/companies", json={"name": "Acme", "owner_id": "not-a-uuid"}
+                "/api/v1/companies",
+                json={
+                    "name": "Acme", "owner_id": "not-a-uuid",
+                    **self._REQUIRED_CREATE_FIELDS,
+                },
             )
         finally:
             self._clear_override(app)
@@ -148,14 +233,20 @@ class CompaniesTests(CompaniesTestCase):
         app = self._override_current_user()
         try:
             resp = await self.client.post(
-                "/api/v1/companies", json={"name": "Acme", "email": "not-an-email"}
+                "/api/v1/companies",
+                json={
+                    "name": "Acme", "email": "not-an-email",
+                    **self._REQUIRED_CREATE_FIELDS,
+                },
             )
         finally:
             self._clear_override(app)
         self.assertEqual(resp.status_code, 422)
 
     async def test_create_company_without_auth_returns_401(self):
-        resp = await self.client.post("/api/v1/companies", json={"name": "Acme"})
+        resp = await self.client.post(
+            "/api/v1/companies", json={"name": "Acme", **self._REQUIRED_CREATE_FIELDS}
+        )
         self.assertEqual(resp.status_code, 401)
 
     async def test_create_company_explicit_null_non_nullable_returns_422(self):
@@ -164,7 +255,10 @@ class CompaniesTests(CompaniesTestCase):
         try:
             for field in ("company_type", "status", "tags", "custom_fields"):
                 resp = await self.client.post(
-                    "/api/v1/companies", json={"name": "Acme", field: None}
+                    "/api/v1/companies",
+                    json={
+                        "name": "Acme", field: None, **self._REQUIRED_CREATE_FIELDS,
+                    },
                 )
                 self.assertEqual(resp.status_code, 422, f"{field}=null should 422")
         finally:
