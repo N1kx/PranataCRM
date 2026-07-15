@@ -1,0 +1,137 @@
+import uuid
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import get_db as get_session
+from app.modules.companies.exceptions import CompanyQueryValidationError
+from app.modules.companies.repository import CompanyRepository
+from app.modules.companies.schemas import (
+    ALLOWED_SORT_FIELDS,
+    CompanyCreate,
+    CompanyListResponse,
+    CompanyResponse,
+    CompanyUpdate,
+)
+from app.modules.companies.service import CompanyService
+from app.shared.contracts.auth_contract import CurrentUser, get_current_user
+from app.shared.types import CompanySize, CompanyType
+
+router = APIRouter(prefix="/companies", tags=["companies"])
+
+_MAX_PAGE_SIZE = 100
+_ALLOWED_STATUS = {"active", "inactive"}
+_ALLOWED_COMPANY_TYPE = {t.value for t in CompanyType}
+_ALLOWED_SIZE = {s.value for s in CompanySize}
+
+
+@router.post("", response_model=CompanyResponse, status_code=201)
+async def create_company(
+    payload: CompanyCreate,
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> CompanyResponse:
+    service = CompanyService(CompanyRepository(session))
+    result = await service.create_company(
+        current_user.tenant_id, current_user.user_id, payload
+    )
+    await session.commit()
+    return result
+
+
+@router.get("", response_model=CompanyListResponse)
+async def list_companies(
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+    page: int = 1,
+    page_size: int = 20,
+    status: str | None = None,
+    company_type: str | None = None,
+    size: str | None = None,
+    industry: str | None = Query(default=None, max_length=100),
+    owner_id: str | None = None,
+    q: str | None = Query(default=None, max_length=100),
+    sort: str = "created_at",
+    order: str = "desc",
+) -> CompanyListResponse:
+    page = max(page, 1)
+    page_size = max(1, min(page_size, _MAX_PAGE_SIZE))
+
+    if status is not None and status not in _ALLOWED_STATUS:
+        raise CompanyQueryValidationError(
+            f"status must be one of: {', '.join(sorted(_ALLOWED_STATUS))}."
+        )
+    if company_type is not None and company_type not in _ALLOWED_COMPANY_TYPE:
+        raise CompanyQueryValidationError(
+            f"company_type must be one of: {', '.join(sorted(_ALLOWED_COMPANY_TYPE))}."
+        )
+    if size is not None and size not in _ALLOWED_SIZE:
+        raise CompanyQueryValidationError(
+            f"size must be one of: {', '.join(sorted(_ALLOWED_SIZE))}."
+        )
+    if sort not in ALLOWED_SORT_FIELDS:
+        raise CompanyQueryValidationError(
+            f"sort must be one of: {', '.join(sorted(ALLOWED_SORT_FIELDS))}."
+        )
+    if order not in ("asc", "desc"):
+        raise CompanyQueryValidationError("order must be one of: asc, desc.")
+
+    owner_uuid: uuid.UUID | None = None
+    if owner_id is not None:
+        try:
+            owner_uuid = uuid.UUID(owner_id)
+        except ValueError:
+            raise CompanyQueryValidationError("owner_id must be a valid UUID.")
+
+    service = CompanyService(CompanyRepository(session))
+    return await service.list_companies(
+        current_user.tenant_id,
+        page,
+        page_size,
+        status=status,
+        company_type=company_type,
+        size=size,
+        industry=industry,
+        owner_id=owner_uuid,
+        q=q,
+        sort=sort,
+        order=order,
+    )
+
+
+@router.get("/{company_id}", response_model=CompanyResponse)
+async def get_company(
+    company_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> CompanyResponse:
+    service = CompanyService(CompanyRepository(session))
+    return await service.get_company(current_user.tenant_id, company_id)
+
+
+@router.patch("/{company_id}", response_model=CompanyResponse)
+async def update_company(
+    company_id: uuid.UUID,
+    payload: CompanyUpdate,
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> CompanyResponse:
+    service = CompanyService(CompanyRepository(session))
+    result = await service.update_company(
+        current_user.tenant_id, company_id, current_user.user_id, payload
+    )
+    await session.commit()
+    return result
+
+
+@router.delete("/{company_id}", status_code=200)
+async def delete_company(
+    company_id: uuid.UUID,
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> dict:
+    service = CompanyService(CompanyRepository(session))
+    await service.delete_company(current_user.tenant_id, company_id)
+    await session.commit()
+    return {"message": "Company deleted successfully."}
