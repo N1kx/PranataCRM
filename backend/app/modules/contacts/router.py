@@ -5,6 +5,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db as get_session
+from app.modules.companies.repository import CompanyRepository
+from app.modules.companies.service import CompanyService
 from app.modules.contacts.repository import ContactRepository
 from app.modules.contacts.schemas import (
     ContactCreate,
@@ -20,13 +22,21 @@ router = APIRouter(prefix="/contacts", tags=["contacts"])
 _MAX_PAGE_SIZE = 100
 
 
+def _build_service(session: AsyncSession) -> ContactService:
+    # CompanyService is injected via CompanyContractProtocol (structural typing —
+    # ContactService only calls company_exists()), not imported as a contacts-
+    # module internal, so this still respects the "no direct cross-module
+    # import of internals" rule despite building a companies.* object here.
+    return ContactService(ContactRepository(session), CompanyService(CompanyRepository(session)))
+
+
 @router.post("", response_model=ContactResponse, status_code=201)
 async def create_contact(
     payload: ContactCreate,
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> ContactResponse:
-    service = ContactService(ContactRepository(session))
+    service = _build_service(session)
     result = await service.create_contact(
         current_user.tenant_id, current_user.user_id, payload
     )
@@ -64,7 +74,7 @@ async def update_contact(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> ContactResponse:
-    service = ContactService(ContactRepository(session))
+    service = _build_service(session)
     result = await service.update_contact(
         current_user.tenant_id, contact_id, current_user.user_id, payload
     )

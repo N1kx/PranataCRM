@@ -37,6 +37,12 @@ class CompanyService:
             raise CompanyNotFound()
         return self._to_response(company)
 
+    async def company_exists(self, tenant_id: uuid.UUID, company_id: uuid.UUID) -> bool:
+        """Implements CompanyContractProtocol — used by other modules (e.g.
+        contacts) to validate a company_id reference without importing this
+        module's internals."""
+        return await self._repo.get_by_id(tenant_id, company_id) is not None
+
     async def list_companies(
         self,
         tenant_id: uuid.UUID,
