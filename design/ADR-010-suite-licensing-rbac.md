@@ -1,7 +1,7 @@
 # ADR-010: Suite Licensing & RBAC Model (Hybrid Role, Custom Permission, Hard Limit)
 
 **Status:** Accepted
-**Date:** 2025-XX-XX
+**Date:** 2026-06-10
 **Berlaku untuk:** Otorisasi & licensing lintas Pranata Suites (CRM, Docs, dst)
 
 ## Context

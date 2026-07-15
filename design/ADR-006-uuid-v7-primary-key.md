@@ -1,8 +1,8 @@
 # ADR-006: UUID v7 sebagai Primary Key (Application-Generated, Kompatibel PostgreSQL ≤15)
 
 **Status:** Accepted
-**Date:** 2025-XX-XX
-**Deciders:** [Nama kamu]
+**Date:** 2026-06-10
+**Deciders:** Niko Winoko
 **Berlaku untuk:** Seluruh tabel pada skema database PranataCRM
 
 ---

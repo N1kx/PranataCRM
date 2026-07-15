@@ -1,7 +1,7 @@
 # ADR-008: RabbitMQ sebagai Message Broker (menggantikan Redis sebagai broker)
 
 **Status:** Accepted
-**Date:** 2025-XX-XX
+**Date:** 2026-06-10
 
 ## Context
 PranataCRM memproses pekerjaan asinkron: pengiriman email, pemrosesan webhook

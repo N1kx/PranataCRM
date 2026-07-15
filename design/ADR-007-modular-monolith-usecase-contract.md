@@ -1,8 +1,8 @@
 # ADR-007: Modular Monolith dengan Contract Diimplementasi di UseCase Layer
 
 **Status:** Accepted
-**Date:** 2025-XX-XX
-**Deciders:** [Nama kamu]
+**Date:** 2026-06-10
+**Deciders:** Niko Winoko
 **Berlaku untuk:** Struktur seluruh modul backend PranataCRM
 
 ---

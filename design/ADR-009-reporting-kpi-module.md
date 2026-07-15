@@ -1,7 +1,7 @@
 # ADR-009: Modul Reporting & KPI (Operational Analytics)
 
 **Status:** Accepted
-**Date:** 2025-XX-XX
+**Date:** 2026-06-10
 
 ## Context
 Dashboard yang sudah direncanakan hanya menampilkan metrik ringkas (conversion
