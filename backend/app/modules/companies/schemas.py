@@ -174,7 +174,13 @@ class CompanyCreate(_CompanyFieldsMixin):
 
 
 class CompanyUpdate(_CompanyFieldsMixin):
+    # name/phone/country stay mandatory on update too: omitting them from a
+    # PATCH is fine (partial update, these validators don't run for unset
+    # fields), but sending an explicit null or blank string to clear one of
+    # them is rejected — a company may never end up without a name/phone/country.
     name: str | None = Field(default=None, min_length=1, max_length=255)
+    phone: str | None = Field(default=None, min_length=1, max_length=50)
+    country: str | None = Field(default=None, min_length=1, max_length=100)
 
     @field_validator("name", mode="before")
     @classmethod
@@ -185,6 +191,24 @@ class CompanyUpdate(_CompanyFieldsMixin):
         v = v.strip() if isinstance(v, str) else v
         if not v:
             raise ValueError("name must be between 1 and 255 characters.")
+        return v
+
+    @field_validator("phone", mode="before")
+    @classmethod
+    def _trim_required_phone(cls, v: str | None) -> str:
+        _reject_null("phone", v)
+        v = v.strip() if isinstance(v, str) else v
+        if not v:
+            raise ValueError("phone is required.")
+        return v
+
+    @field_validator("country", mode="before")
+    @classmethod
+    def _trim_required_country(cls, v: str | None) -> str:
+        _reject_null("country", v)
+        v = v.strip() if isinstance(v, str) else v
+        if not v:
+            raise ValueError("country is required.")
         return v
 
 

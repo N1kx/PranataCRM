@@ -525,6 +525,69 @@ class CompaniesTests(CompaniesTestCase):
             self._clear_override(app)
         self.assertEqual(resp.status_code, 422)
 
+    async def test_update_company_explicit_null_phone_returns_422(self):
+        # phone is mandatory (business rule) — clearing it via PATCH must 422.
+        app = self._override_current_user()
+        try:
+            resp = await self.client.patch(
+                f"/api/v1/companies/{self._company_id}", json={"phone": None}
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
+
+    async def test_update_company_blank_phone_returns_422(self):
+        app = self._override_current_user()
+        try:
+            resp = await self.client.patch(
+                f"/api/v1/companies/{self._company_id}", json={"phone": "   "}
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
+
+    async def test_update_company_explicit_null_country_returns_422(self):
+        # country is mandatory (business rule) — clearing it via PATCH must 422.
+        app = self._override_current_user()
+        try:
+            resp = await self.client.patch(
+                f"/api/v1/companies/{self._company_id}", json={"country": None}
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
+
+    async def test_update_company_blank_country_returns_422(self):
+        app = self._override_current_user()
+        try:
+            resp = await self.client.patch(
+                f"/api/v1/companies/{self._company_id}", json={"country": "  "}
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
+
+    @patch("app.modules.companies.repository.CompanyRepository.update", new_callable=AsyncMock)
+    @patch("app.modules.companies.repository.CompanyRepository.get_by_id", new_callable=AsyncMock)
+    async def test_update_company_phone_and_country_success(self, mock_get, mock_update):
+        # Sending a real value (not clearing it) is a normal partial update.
+        mock_get.return_value = _fake_company(self._company_id, self._tenant_id)
+        mock_update.return_value = _fake_company(
+            self._company_id, self._tenant_id, phone="0812", country="Indonesia"
+        )
+        app = self._override_current_user()
+        try:
+            resp = await self.client.patch(
+                f"/api/v1/companies/{self._company_id}",
+                json={"phone": "0812", "country": "Indonesia"},
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 200)
+        update_data = mock_update.call_args.args[1]
+        self.assertEqual(update_data["phone"], "0812")
+        self.assertEqual(update_data["country"], "Indonesia")
+
     @patch("app.modules.companies.repository.CompanyRepository.get_by_id", new_callable=AsyncMock)
     async def test_update_company_not_found_returns_404(self, mock_get):
         mock_get.return_value = None
