@@ -1,6 +1,6 @@
 import uuid
 
-from app.modules.contacts.exceptions import ContactNotFound, InvalidCompanyReference
+from app.modules.contacts.exceptions import ContactNotFound
 from app.modules.contacts.models import Contact
 from app.modules.contacts.repository import ContactRepository
 from app.modules.contacts.schemas import (
@@ -9,25 +9,15 @@ from app.modules.contacts.schemas import (
     ContactResponse,
     ContactUpdate,
 )
-from app.shared.contracts.company_contract import CompanyContractProtocol
 
 
 class ContactService:
-    """Internal domain logic for contacts. Never imported from outside this module."""
+    """Internal domain logic for contacts. Never imported from outside this module.
+    Knows nothing about other modules — company_id existence is validated one
+    layer up, in ContactUseCase, via CompanyContractProtocol."""
 
-    def __init__(
-        self, repo: ContactRepository, companies: CompanyContractProtocol | None = None,
-    ) -> None:
+    def __init__(self, repo: ContactRepository) -> None:
         self._repo = repo
-        # Optional so existing tests/call sites that never touch company_id
-        # don't need to wire a companies dependency they don't use.
-        self._companies = companies
-
-    async def _validate_company_id(self, tenant_id: uuid.UUID, company_id: uuid.UUID) -> None:
-        if self._companies is None:
-            return
-        if not await self._companies.company_exists(tenant_id, company_id):
-            raise InvalidCompanyReference()
 
     async def create_contact(
         self, tenant_id: uuid.UUID, actor_id: uuid.UUID, payload: ContactCreate
@@ -37,7 +27,6 @@ class ContactService:
         data["created_by"] = actor_id
         if data.get("company_id") is not None:
             data["company_id"] = uuid.UUID(data["company_id"])
-            await self._validate_company_id(tenant_id, data["company_id"])
         if data.get("owner_id") is not None:
             data["owner_id"] = uuid.UUID(data["owner_id"])
         contact = await self._repo.create(data)
@@ -76,7 +65,6 @@ class ContactService:
         data = payload.model_dump(exclude_unset=True)
         if data.get("company_id") is not None:
             data["company_id"] = uuid.UUID(data["company_id"])
-            await self._validate_company_id(tenant_id, data["company_id"])
         if data.get("owner_id") is not None:
             data["owner_id"] = uuid.UUID(data["owner_id"])
         data["updated_by"] = actor_id

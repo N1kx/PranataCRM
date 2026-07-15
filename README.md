@@ -14,9 +14,11 @@ pranata-crm/
 │   ├── entrypoint.sh
 │   ├── requirements.txt
 │   └── run.py     ← Windows-compatible server entrypoint
+├── design/        ← Architectural decision records (ADR-001, ADR-002, ...)
 ├── docker-compose.yml
 ├── nginx/         ← Reverse proxy config for the `gateway` service
 │   └── nginx.conf
+├── postman/       ← Postman collection + environment for exercising the API
 └── frontend/      ← Nuxt 4 + Nuxt UI + Pinia + i18n
     ├── app/       ← Pages, components, composables, stores, layouts
     ├── i18n/      ← Locale files (id / en)
@@ -263,18 +265,26 @@ via Newman.
 The backend follows a **modular monolith** pattern:
 
 ```text
-router → [use_case →] service (internal) → repository → model
+router → use_case (implements Protocol) → service (internal) → repository → model
 ```
 
-Some modules (e.g. `auth`, `deals`) route through a `use_case` entry point; others (e.g.
-`contacts`, `companies`) call their `service` directly from the router — either way, business
-logic never lives in the router itself.
-
-- Modules only communicate via `shared/contracts/` — never by direct import of another module's
-  internals.
-- Dependency wiring is built per-request in each router (FastAPI `Depends`), not centralized.
+- **`router.py`** — HTTP adapter only. Calls its own module's `use_case`, never a `service` or
+  `repository` directly, and contains no business logic.
+- **`use_case.py`** — the module's sole entry point from the outside world (its own router, or
+  another module). It's the only class that implements that module's `*ContractProtocol` from
+  `shared/contracts/`. If it needs another module's capability, it depends on that module's
+  Protocol (injected via constructor), never the concrete class.
+- **`service.py`** — internal domain logic. Never imported or called from outside its own module,
+  and knows nothing about other modules.
+- Contracts (`typing.Protocol`) are defined per-module in `shared/contracts/`, but only for the
+  capabilities another module actually consumes (e.g. `CompanyContractProtocol.company_exists`,
+  used by `contacts` to validate `company_id`) — not speculatively for every module.
+- All use_case wiring (concrete class → Protocol) happens in `app/container.py`, via FastAPI
+  `Depends()` provider functions — routers never construct a service/repository themselves.
 - No foreign keys in the DB — soft UUID references, manual indexes.
 - UUID v7 (time-ordered) generated in the application layer.
 - Row Level Security (RLS) enabled on all tenant-scoped tables.
 
-See [issue.md](issue.md) for full architectural decisions (ADRs).
+See [design/](design/) for the full set of architectural decision records (ADRs), including
+[ADR-007](design/ADR-007-modular-monolith-usecase-contract.md) for the rationale behind this
+layering.

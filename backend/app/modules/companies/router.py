@@ -4,9 +4,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.container import get_company_usecase
 from app.database import get_db as get_session
 from app.modules.companies.exceptions import CompanyQueryValidationError
-from app.modules.companies.repository import CompanyRepository
 from app.modules.companies.schemas import (
     ALLOWED_SORT_FIELDS,
     CompanyCreate,
@@ -15,7 +15,7 @@ from app.modules.companies.schemas import (
     CompanySummary,
     CompanyUpdate,
 )
-from app.modules.companies.service import CompanyService
+from app.modules.companies.use_case import CompanyUseCase
 from app.shared.contracts.auth_contract import CurrentUser, get_current_user
 from app.shared.types import CompanySize, CompanyType
 
@@ -32,9 +32,9 @@ async def create_company(
     payload: CompanyCreate,
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    companies: Annotated[CompanyUseCase, Depends(get_company_usecase)],
 ) -> CompanyResponse:
-    service = CompanyService(CompanyRepository(session))
-    result = await service.create_company(
+    result = await companies.create_company(
         current_user.tenant_id, current_user.user_id, payload
     )
     await session.commit()
@@ -44,7 +44,7 @@ async def create_company(
 @router.get("", response_model=CompanyListResponse)
 async def list_companies(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(get_session)],
+    companies: Annotated[CompanyUseCase, Depends(get_company_usecase)],
     page: int = 1,
     page_size: int = 20,
     status: str | None = None,
@@ -85,8 +85,7 @@ async def list_companies(
         except ValueError:
             raise CompanyQueryValidationError("owner_id must be a valid UUID.")
 
-    service = CompanyService(CompanyRepository(session))
-    return await service.list_companies(
+    return await companies.list_companies(
         current_user.tenant_id,
         page,
         page_size,
@@ -104,20 +103,19 @@ async def list_companies(
 @router.get("/search", response_model=list[CompanySummary])
 async def search_companies(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(get_session)],
+    companies: Annotated[CompanyUseCase, Depends(get_company_usecase)],
     q: str = "",
     # Bounded at the edge so a crafted value (e.g. -1 -> SQL "LIMIT -1", which
     # Postgres rejects) can't reach the query and 500 the endpoint.
     limit: int = Query(default=20, ge=1, le=50),
 ) -> list[CompanySummary]:
-    service = CompanyService(CompanyRepository(session))
-    return await service.search_companies(current_user.tenant_id, q, limit)
+    return await companies.search_companies(current_user.tenant_id, q, limit)
 
 
 @router.get("/lookup", response_model=list[CompanySummary])
 async def lookup_companies(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(get_session)],
+    companies: Annotated[CompanyUseCase, Depends(get_company_usecase)],
     ids: str = "",
 ) -> list[CompanySummary]:
     parsed = []
@@ -129,18 +127,16 @@ async def lookup_companies(
             parsed.append(uuid.UUID(x))
         except ValueError:
             continue
-    service = CompanyService(CompanyRepository(session))
-    return await service.lookup_companies(current_user.tenant_id, parsed)
+    return await companies.lookup_companies(current_user.tenant_id, parsed)
 
 
 @router.get("/{company_id}", response_model=CompanyResponse)
 async def get_company(
     company_id: uuid.UUID,
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(get_session)],
+    companies: Annotated[CompanyUseCase, Depends(get_company_usecase)],
 ) -> CompanyResponse:
-    service = CompanyService(CompanyRepository(session))
-    return await service.get_company(current_user.tenant_id, company_id)
+    return await companies.get_company(current_user.tenant_id, company_id)
 
 
 @router.patch("/{company_id}", response_model=CompanyResponse)
@@ -149,9 +145,9 @@ async def update_company(
     payload: CompanyUpdate,
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    companies: Annotated[CompanyUseCase, Depends(get_company_usecase)],
 ) -> CompanyResponse:
-    service = CompanyService(CompanyRepository(session))
-    result = await service.update_company(
+    result = await companies.update_company(
         current_user.tenant_id, company_id, current_user.user_id, payload
     )
     await session.commit()
@@ -163,8 +159,8 @@ async def delete_company(
     company_id: uuid.UUID,
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    companies: Annotated[CompanyUseCase, Depends(get_company_usecase)],
 ) -> dict:
-    service = CompanyService(CompanyRepository(session))
-    await service.delete_company(current_user.tenant_id, company_id)
+    await companies.delete_company(current_user.tenant_id, company_id)
     await session.commit()
     return {"message": "Company deleted successfully."}

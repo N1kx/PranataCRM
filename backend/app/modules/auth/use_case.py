@@ -6,6 +6,7 @@ from app.modules.auth.schemas import (
     CreateUserRequest,
     InviteUserRequest,
     LoginRequest,
+    MeResponse,
     RegisterTenantRequest,
     RegisterTenantResponse,
     UserSummary,
@@ -48,6 +49,9 @@ class AuthUseCase:
 
     async def logout(self, refresh_token: str | None) -> None:
         await self._service.logout(refresh_token)
+
+    async def get_me(self, user_id: uuid.UUID) -> MeResponse:
+        return await self._service.get_me(user_id)
 
     async def search_users(
         self, tenant_id: uuid.UUID, query: str, limit: int = 20

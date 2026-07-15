@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.container import get_auth_usecase
 from app.database import get_db as get_session
 from app.modules.auth.dependencies import CurrentUser, get_current_user
 from app.modules.auth.exceptions import PermissionDenied
@@ -19,8 +20,6 @@ from app.modules.auth.schemas import (
     RegisterTenantResponse,
     UserSummary,
 )
-from app.modules.auth.service import AuthService
-from app.modules.auth.repository import AuthRepository
 from app.modules.auth.use_case import AuthUseCase
 from app.shared.types import SuiteRole
 from app.config import get_settings
@@ -31,21 +30,9 @@ users_router = APIRouter(prefix="/users", tags=["users"])
 # CurrentUser/get_current_user live in app.modules.auth.dependencies; they are
 # imported above for this module's own endpoints and re-exported here so the
 # existing tests that patch app.modules.auth.router.get_current_user keep working.
-__all__ = ["router", "users_router", "CurrentUser", "get_current_user"]
-
-
-# ── Dependency helpers ────────────────────────────────────────────────────────
-
-def _build_use_case(session: AsyncSession) -> AuthUseCase:
-    repo = AuthRepository(session)
-    service = AuthService(repo)
-    return AuthUseCase(service)
-
-
-async def get_auth_usecase(
-    session: Annotated[AsyncSession, Depends(get_session)],
-) -> AuthUseCase:
-    return _build_use_case(session)
+# get_auth_usecase is re-exported from app.container for the same reason —
+# existing tests patch app.modules.auth.router.get_auth_usecase.
+__all__ = ["router", "users_router", "CurrentUser", "get_current_user", "get_auth_usecase"]
 
 
 def _get_tenant_slug(request: Request) -> str | None:
@@ -126,10 +113,9 @@ async def logout(
 @router.get("/me", response_model=MeResponse)
 async def me(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(get_session)],
+    auth: Annotated[AuthUseCase, Depends(get_auth_usecase)],
 ) -> MeResponse:
-    service = AuthService(AuthRepository(session))
-    return await service.get_me(current_user.user_id)
+    return await auth.get_me(current_user.user_id)
 
 
 @router.post("/accept-invite", response_model=AuthUserResponse, status_code=201)
