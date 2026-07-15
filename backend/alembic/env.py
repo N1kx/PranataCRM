@@ -13,6 +13,7 @@ from app.shared.base import Base
 import app.modules.auth.models  # noqa: F401
 import app.modules.licensing.models  # noqa: F401
 import app.modules.contacts.models  # noqa: F401
+import app.modules.companies.models  # noqa: F401
 import app.modules.deals.models  # noqa: F401
 import app.modules.ai.models  # noqa: F401
 import app.modules.billing.models  # noqa: F401

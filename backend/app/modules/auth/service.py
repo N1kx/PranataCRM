@@ -304,6 +304,9 @@ class AuthService:
             created_at=user.created_at,
         )
 
+    async def user_exists(self, tenant_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+        return await self._repo.user_exists_in_tenant(tenant_id, user_id)
+
     async def get_current_user_from_token(
         self, access_token: str
     ) -> tuple[uuid.UUID, uuid.UUID]:

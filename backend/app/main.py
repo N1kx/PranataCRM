@@ -87,6 +87,7 @@ async def health() -> dict:
 
 from app.modules.auth.router import router as auth_router, users_router
 from app.modules.contacts.router import router as contacts_router
+from app.modules.companies.router import router as companies_router
 from app.modules.deals.router import router as deals_router
 from app.modules.ai.router import router as ai_router
 from app.modules.billing.router import router as billing_router
@@ -96,6 +97,7 @@ API_PREFIX = "/api/v1"
 app.include_router(auth_router, prefix=API_PREFIX)
 app.include_router(users_router, prefix=API_PREFIX)
 app.include_router(contacts_router, prefix=API_PREFIX)
+app.include_router(companies_router, prefix=API_PREFIX)
 app.include_router(deals_router, prefix=API_PREFIX)
 app.include_router(ai_router, prefix=API_PREFIX)
 app.include_router(billing_router, prefix=API_PREFIX)

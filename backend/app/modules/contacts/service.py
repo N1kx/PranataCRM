@@ -12,7 +12,9 @@ from app.modules.contacts.schemas import (
 
 
 class ContactService:
-    """Internal domain logic for contacts. Never imported from outside this module."""
+    """Internal domain logic for contacts. Never imported from outside this module.
+    Knows nothing about other modules — company_id existence is validated one
+    layer up, in ContactUseCase, via CompanyContractProtocol."""
 
     def __init__(self, repo: ContactRepository) -> None:
         self._repo = repo
