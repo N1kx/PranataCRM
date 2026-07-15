@@ -231,7 +231,11 @@ class ContactsTests(ContactsTestCase):
             self._clear_override(app)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()["page_size"], 100)
-        mock_list.assert_called_once_with(self._tenant_id, 100, 0)
+        mock_list.assert_called_once_with(
+            self._tenant_id, 100, 0,
+            status=None, lifecycle_stage=None, owner_id=None, company_id=None,
+            q=None, sort="created_at", order="desc",
+        )
 
     # ── update ────────────────────────────────────────────────────────────────
 

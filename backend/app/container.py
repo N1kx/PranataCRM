@@ -38,5 +38,6 @@ async def get_company_usecase(
 async def get_contact_usecase(
     session: Annotated[AsyncSession, Depends(get_session)],
     companies: Annotated[CompanyContractProtocol, Depends(get_company_usecase)],
+    auth: Annotated[AuthContractProtocol, Depends(get_auth_usecase)],
 ) -> ContactUseCase:
-    return ContactUseCase(ContactService(ContactRepository(session)), companies)
+    return ContactUseCase(ContactService(ContactRepository(session)), companies, auth)

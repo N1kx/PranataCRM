@@ -480,7 +480,60 @@
                 }
               ]
             },
-            "description": "Paginated, tenant-scoped list. page_size is capped at 100 server-side."
+            "description": "Paginated, tenant-scoped list. page_size is capped at 100 server-side. Also supports filter/sort/search query params — see List Contacts (filtered) below."
+          }
+        },
+        {
+          "name": "List Contacts (filtered/sorted/searched)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Lists contacts with filters applied', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.have.property('items');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/contacts?status=lead&lifecycle_stage=mql&q=Ada&sort=first_name&order=asc",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "contacts"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "lead"
+                },
+                {
+                  "key": "lifecycle_stage",
+                  "value": "mql"
+                },
+                {
+                  "key": "q",
+                  "value": "Ada"
+                },
+                {
+                  "key": "sort",
+                  "value": "first_name"
+                },
+                {
+                  "key": "order",
+                  "value": "asc"
+                }
+              ]
+            },
+            "description": "Demonstrates the filter/sort/search query params: status, lifecycle_stage, owner_id, company_id (exact-match filters, AND semantics), q (case-insensitive search across first_name/last_name/email), sort (allowlisted columns only) + order. An invalid value for any of these returns 422 with the allowed values listed."
           }
         },
         {

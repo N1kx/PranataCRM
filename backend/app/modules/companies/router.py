@@ -59,6 +59,10 @@ async def list_companies(
     page = max(page, 1)
     page_size = max(1, min(page_size, _MAX_PAGE_SIZE))
 
+    # An empty/whitespace-only sort falls back to the default, same as an
+    # omitted param — only a non-empty value outside the allowlist is a 422.
+    sort = sort.strip() or "created_at"
+
     if status is not None and status not in _ALLOWED_STATUS:
         raise CompanyQueryValidationError(
             f"status must be one of: {', '.join(sorted(_ALLOWED_STATUS))}."
@@ -86,6 +90,7 @@ async def list_companies(
             raise CompanyQueryValidationError("owner_id must be a valid UUID.")
 
     industry = industry.strip() or None if industry is not None else None
+    q = q.strip() or None if q is not None else None
 
     return await companies.list_companies(
         current_user.tenant_id,

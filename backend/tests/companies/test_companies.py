@@ -464,6 +464,40 @@ class CompaniesTests(CompaniesTestCase):
         self.assertEqual(resp.status_code, 422)
 
     @patch("app.modules.companies.repository.CompanyRepository.list", new_callable=AsyncMock)
+    async def test_list_companies_blank_sort_falls_back_to_default(self, mock_list):
+        # An explicit empty sort= behaves like an omitted param, not a 422.
+        mock_list.return_value = ([], 0)
+        app = self._override_current_user()
+        try:
+            resp = await self.client.get("/api/v1/companies?sort=")
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(mock_list.call_args.kwargs["sort"], "created_at")
+
+    @patch("app.modules.companies.repository.CompanyRepository.list", new_callable=AsyncMock)
+    async def test_list_companies_blank_q_is_treated_as_omitted(self, mock_list):
+        mock_list.return_value = ([], 0)
+        app = self._override_current_user()
+        try:
+            resp = await self.client.get("/api/v1/companies?q=%20%20")
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 200)
+        self.assertIsNone(mock_list.call_args.kwargs["q"])
+
+    @patch("app.modules.companies.repository.CompanyRepository.list", new_callable=AsyncMock)
+    async def test_list_companies_trims_q_whitespace(self, mock_list):
+        mock_list.return_value = ([], 0)
+        app = self._override_current_user()
+        try:
+            resp = await self.client.get("/api/v1/companies?q=%20acme%20")
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(mock_list.call_args.kwargs["q"], "acme")
+
+    @patch("app.modules.companies.repository.CompanyRepository.list", new_callable=AsyncMock)
     async def test_list_companies_combines_filters(self, mock_list):
         # All params are optional and combinable (AND semantics).
         mock_list.return_value = ([], 0)

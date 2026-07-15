@@ -8,6 +8,17 @@ _ALLOWED_STATUS = {s.value for s in ContactStatus}
 _ALLOWED_LIFECYCLE_STAGE = {s.value for s in LifecycleStage}
 _ALLOWED_PREFERRED_CONTACT_METHOD = {s.value for s in PreferredContactMethod}
 
+# Allowlist for GET /contacts query params — never interpolate raw client
+# input into the query. Keys are the client-facing values; values are the
+# matching Contact model column names.
+ALLOWED_SORT_FIELDS = {
+    "created_at": "created_at",
+    "first_name": "first_name",
+    "last_name": "last_name",
+    "email": "email",
+    "status": "status",
+}
+
 
 def _trim(v: str | None) -> str | None:
     if v is None:
