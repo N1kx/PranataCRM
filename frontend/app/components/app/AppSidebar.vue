@@ -76,6 +76,16 @@
           <AppNavItem to="/app/settings/team" :label="t('nav.team')" icon="i-lucide-users-round" :collapsed="collapsed" />
           <AppNavItem to="/app/settings/roles" :label="t('nav.roles')" icon="i-lucide-shield-check" :collapsed="collapsed" />
           <AppNavItem to="/app/settings/billing" :label="t('nav.billing')" icon="i-lucide-credit-card" :collapsed="collapsed" />
+          <!-- Geo reference data (issue #26) is gated tighter than the rest
+               of Settings — tenant_owner only, enforced server-side too
+               (see admin_router.py's TODO on the interim role gate). -->
+          <AppNavItem
+            v-if="user?.suite_role === 'tenant_owner'"
+            to="/app/settings/geo"
+            :label="t('nav.geo')"
+            icon="i-lucide-map-pin"
+            :collapsed="collapsed"
+          />
         </ul>
       </div>
     </nav>

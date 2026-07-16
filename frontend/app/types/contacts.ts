@@ -24,7 +24,11 @@ export interface Contact {
   status: ContactStatus
   lifecycle_stage?: LifecycleStage | null
   lead_source?: string | null
+  /** geo_cities.id (issue #26) — resolve the display name via useGeo(), not stored as text. */
   city?: string | null
+  /** geo_states.id (issue #26) — resolve the display name via useGeo(), not stored as text. */
+  state?: string | null
+  /** ISO 3166-1 alpha-2 code, e.g. "ID" (issue #26) — not a free-text country name. */
   country?: string | null
   description?: string | null
   created_at: string
@@ -43,6 +47,7 @@ export interface ContactCreatePayload {
   lifecycle_stage?: LifecycleStage
   lead_source?: string
   city?: string
+  state?: string
   country?: string
   description?: string
 }

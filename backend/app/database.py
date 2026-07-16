@@ -9,10 +9,12 @@ from app.shared.base import Base  # noqa: F401 — re-exported for Alembic
 import app.modules.auth.models  # noqa: F401
 import app.modules.licensing.models  # noqa: F401
 import app.modules.contacts.models  # noqa: F401
+import app.modules.companies.models  # noqa: F401
 import app.modules.deals.models  # noqa: F401
 import app.modules.ai.models  # noqa: F401
 import app.modules.billing.models  # noqa: F401
 import app.modules.reporting.models  # noqa: F401
+import app.modules.geo.models  # noqa: F401
 
 settings = get_settings()
 

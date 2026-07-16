@@ -5,10 +5,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install system deps for asyncpg + bcrypt
+# Install system deps for asyncpg + bcrypt, plus the psql client (entrypoint.sh
+# uses it to run the one-off geo reference data seed, db/seed/geo_reference_data.sql)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # requirements.txt is the pinned source of truth (kept in sync with the venv

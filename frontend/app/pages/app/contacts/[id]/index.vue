@@ -85,18 +85,45 @@ definePageMeta({ layout: 'app', middleware: 'auth' })
 
 const { t, locale } = useI18n()
 const { get } = useContacts()
+const { listCountries, listStates, listCities } = useGeo()
 const route = useRoute()
 
 const contactId = route.params.id as string
 const contact = ref<Contact | null>(null)
 const isLoading = ref(false)
 const loadErrorCode = ref('')
+// country/state/city are stored as an ISO code / geo ids (issue #26);
+// resolve their display names separately since the contact response itself
+// only carries the raw code/id.
+const countryName = ref('')
+const stateName = ref('')
+const cityName = ref('')
 
 async function loadContact() {
   isLoading.value = true
   loadErrorCode.value = ''
+  countryName.value = ''
+  stateName.value = ''
+  cityName.value = ''
   try {
     contact.value = await get(contactId)
+    const c = contact.value
+    if (c?.country) {
+      const countries = await listCountries()
+      countryName.value = countries.find(x => x.value === c.country)?.label ?? ''
+    }
+    if (c?.state) {
+      // The states-by-country / cities-by-state lists are each the full
+      // active set for that scope (small, backend-cached) — it's also how
+      // we resolve the selected state/city's label, no separate /lookup
+      // endpoint needed.
+      const states = await listStates(c.country ?? '')
+      stateName.value = states.find(x => x.value === c.state)?.label ?? ''
+    }
+    if (c?.city && c?.state) {
+      const cities = await listCities(c.state)
+      cityName.value = cities.find(x => x.value === c.city)?.label ?? ''
+    }
   }
   catch (err: unknown) {
     const e = err as { code?: string }
@@ -123,8 +150,9 @@ const detailFields = computed(() => {
       value: c.lifecycle_stage ? t(`contacts.lifecycle.${c.lifecycle_stage}`) : '',
     },
     { label: t('contacts.fields.lead_source'), value: c.lead_source },
-    { label: t('contacts.fields.city'), value: c.city },
-    { label: t('contacts.fields.country'), value: c.country },
+    { label: t('contacts.fields.country'), value: countryName.value },
+    { label: t('contacts.fields.state'), value: stateName.value },
+    { label: t('contacts.fields.city'), value: cityName.value },
     {
       label: t('contacts.fields.created_at'),
       value: new Date(c.created_at).toLocaleString(locale.value),

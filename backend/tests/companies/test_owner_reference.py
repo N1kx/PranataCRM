@@ -50,7 +50,7 @@ class OwnerReferenceTests(CompaniesTestCase):
             resp = await self.client.post(
                 "/api/v1/companies",
                 json={
-                    "name": "Acme Corp", "phone": "+62 812-0000-0000", "country": "Indonesia",
+                    "name": "Acme Corp", "phone": "+62 812-0000-0000", "country": "ID",
                     "owner_id": str(self._owner_id),
                 },
             )
@@ -72,7 +72,7 @@ class OwnerReferenceTests(CompaniesTestCase):
             resp = await self.client.post(
                 "/api/v1/companies",
                 json={
-                    "name": "Acme Corp", "phone": "+62 812-0000-0000", "country": "Indonesia",
+                    "name": "Acme Corp", "phone": "+62 812-0000-0000", "country": "ID",
                     "owner_id": str(self._owner_id),
                 },
             )
@@ -93,7 +93,7 @@ class OwnerReferenceTests(CompaniesTestCase):
         try:
             resp = await self.client.post(
                 "/api/v1/companies",
-                json={"name": "Acme Corp", "phone": "+62 812-0000-0000", "country": "Indonesia"},
+                json={"name": "Acme Corp", "phone": "+62 812-0000-0000", "country": "ID"},
             )
         finally:
             self._clear_override(app)

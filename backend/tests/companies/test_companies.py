@@ -79,7 +79,7 @@ class CompaniesTests(CompaniesTestCase):
     # name/phone/country are required on create (business rule, not a DB
     # constraint) - every other create test includes them so a 422 there
     # is unambiguously about the field under test, not a missing required field.
-    _REQUIRED_CREATE_FIELDS = {"phone": "+62 812-0000-0000", "country": "Indonesia"}
+    _REQUIRED_CREATE_FIELDS = {"phone": "+62 812-0000-0000", "country": "ID"}
 
     @patch("app.modules.companies.repository.CompanyRepository.create", new_callable=AsyncMock)
     async def test_create_company_success(self, mock_create):
@@ -117,7 +117,7 @@ class CompaniesTests(CompaniesTestCase):
         app = self._override_current_user()
         try:
             resp = await self.client.post(
-                "/api/v1/companies", json={"name": "Acme", "country": "Indonesia"}
+                "/api/v1/companies", json={"name": "Acme", "country": "ID"}
             )
         finally:
             self._clear_override(app)
@@ -128,7 +128,7 @@ class CompaniesTests(CompaniesTestCase):
         try:
             resp = await self.client.post(
                 "/api/v1/companies",
-                json={"name": "Acme", "phone": "   ", "country": "Indonesia"},
+                json={"name": "Acme", "phone": "   ", "country": "ID"},
             )
         finally:
             self._clear_override(app)
@@ -139,7 +139,7 @@ class CompaniesTests(CompaniesTestCase):
         try:
             resp = await self.client.post(
                 "/api/v1/companies",
-                json={"name": "Acme", "phone": None, "country": "Indonesia"},
+                json={"name": "Acme", "phone": None, "country": "ID"},
             )
         finally:
             self._clear_override(app)
@@ -629,20 +629,20 @@ class CompaniesTests(CompaniesTestCase):
         # Sending a real value (not clearing it) is a normal partial update.
         mock_get.return_value = _fake_company(self._company_id, self._tenant_id)
         mock_update.return_value = _fake_company(
-            self._company_id, self._tenant_id, phone="0812", country="Indonesia"
+            self._company_id, self._tenant_id, phone="0812", country="ID"
         )
         app = self._override_current_user()
         try:
             resp = await self.client.patch(
                 f"/api/v1/companies/{self._company_id}",
-                json={"phone": "0812", "country": "Indonesia"},
+                json={"phone": "0812", "country": "ID"},
             )
         finally:
             self._clear_override(app)
         self.assertEqual(resp.status_code, 200)
         update_data = mock_update.call_args.args[1]
         self.assertEqual(update_data["phone"], "0812")
-        self.assertEqual(update_data["country"], "Indonesia")
+        self.assertEqual(update_data["country"], "ID")
 
     @patch("app.modules.companies.repository.CompanyRepository.get_by_id", new_callable=AsyncMock)
     async def test_update_company_not_found_returns_404(self, mock_get):
