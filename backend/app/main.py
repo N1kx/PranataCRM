@@ -91,6 +91,8 @@ from app.modules.companies.router import router as companies_router
 from app.modules.deals.router import router as deals_router
 from app.modules.ai.router import router as ai_router
 from app.modules.billing.router import router as billing_router
+from app.modules.geo.router import router as geo_router
+from app.modules.geo.admin_router import router as geo_admin_router
 
 API_PREFIX = "/api/v1"
 
@@ -101,3 +103,5 @@ app.include_router(companies_router, prefix=API_PREFIX)
 app.include_router(deals_router, prefix=API_PREFIX)
 app.include_router(ai_router, prefix=API_PREFIX)
 app.include_router(billing_router, prefix=API_PREFIX)
+app.include_router(geo_router, prefix=API_PREFIX)
+app.include_router(geo_admin_router, prefix=API_PREFIX)

@@ -87,6 +87,7 @@
     "team": "Tim & Seat",
     "roles": "Role & Akses",
     "billing": "Billing",
+    "geo": "Lokasi",
     "collapse_sidebar": "Ciutkan sidebar",
     "expand_sidebar": "Perluas sidebar"
   },
@@ -141,6 +142,7 @@
       "lifecycle_stage": "Tahap lifecycle",
       "lead_source": "Sumber lead",
       "city": "Kota",
+      "state": "Provinsi",
       "country": "Negara",
       "description": "Deskripsi",
       "created_at": "Dibuat pada"
@@ -178,6 +180,28 @@
     "no_results": "Anggota tim tidak ditemukan",
     "unassigned": "Belum ditugaskan"
   },
+  "location_select": {
+    "country_label": "Negara",
+    "state_label": "Provinsi",
+    "city_label": "Kota",
+    "country_placeholder": "Pilih negara",
+    "state_placeholder": "Pilih provinsi",
+    "city_placeholder": "Pilih kota",
+    "search_placeholder": "Cari...",
+    "no_results": "Tidak ada hasil"
+  },
+  "geo_admin": {
+    "title": "Lokasi",
+    "description": "Kelola provinsi dan kota yang dipakai pada field lokasi di kontak dan perusahaan. Negara mengikuti standar ISO dan tidak bisa ditambah/dihapus di sini.",
+    "owner_only": "Hanya pemilik workspace yang bisa mengelola lokasi.",
+    "country": "Negara",
+    "states_title": "Provinsi di {country}",
+    "cities_title": "Kota di {state}",
+    "new_state_placeholder": "Nama provinsi baru",
+    "new_city_placeholder": "Nama kota baru",
+    "add": "Tambah",
+    "delete": "Hapus"
+  },
   "error": {
     "CONTACT_NOT_FOUND": "Kontak tidak ditemukan.",
     "AUTH_INVALID_CREDENTIALS": "Email atau kata sandi salah.",
@@ -188,6 +212,9 @@
     "AUTH_INVITE_INVALID": "Undangan tidak valid atau sudah kedaluwarsa.",
     "AUTH_PERMISSION_DENIED": "Anda tidak punya izin untuk aksi ini.",
     "AUTH_NOT_AUTHENTICATED": "Sesi Anda telah berakhir. Silakan masuk kembali.",
+    "INVALID_COUNTRY_REFERENCE": "Pilih negara yang valid.",
+    "INVALID_STATE_REFERENCE": "Pilih provinsi yang valid untuk negara yang dipilih.",
+    "INVALID_CITY_REFERENCE": "Pilih kota yang valid untuk provinsi yang dipilih.",
     "INTERNAL_ERROR": "Terjadi kesalahan. Silakan coba lagi.",
     "unknown": "Terjadi kesalahan tak terduga."
   },

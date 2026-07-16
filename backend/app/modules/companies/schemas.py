@@ -57,10 +57,16 @@ class _CompanyFieldsMixin(BaseModel):
     source: str | None = Field(default=None, max_length=50)
     address_line1: str | None = Field(default=None, max_length=255)
     address_line2: str | None = Field(default=None, max_length=255)
+    # city/state/country are structured references into the geo module
+    # (issue #26), not free text: country is an ISO 3166-1 alpha-2 code,
+    # state/city are geo_states.id / geo_cities.id (UUID strings). Format is
+    # validated here; existence + cross-parent consistency (state belongs to
+    # country, city belongs to state) is validated in CompanyUseCase via
+    # GeoContractProtocol, mirroring how owner_id existence is validated.
     city: str | None = Field(default=None, max_length=100)
     state: str | None = Field(default=None, max_length=100)
     postal_code: str | None = Field(default=None, max_length=20)
-    country: str | None = Field(default=None, max_length=100)
+    country: str | None = Field(default=None, min_length=2, max_length=2)
     timezone: str | None = Field(default=None, max_length=50)
     linkedin_url: str | None = None
     twitter_handle: str | None = Field(default=None, max_length=100)
@@ -71,14 +77,49 @@ class _CompanyFieldsMixin(BaseModel):
 
     @field_validator(
         "owner_id", "legal_name", "domain", "website", "phone", "industry",
-        "source", "address_line1", "address_line2", "city", "state",
-        "postal_code", "country", "timezone", "linkedin_url", "twitter_handle",
+        "source", "address_line1", "address_line2",
+        "postal_code", "timezone", "linkedin_url", "twitter_handle",
         "logo_url", "description",
         mode="before",
     )
     @classmethod
     def _trim_strings(cls, v: str | None) -> str | None:
         return _trim(v)
+
+    @field_validator("country", mode="before")
+    @classmethod
+    def _normalize_country(cls, v: str | None) -> str | None:
+        v = _trim(v)
+        if v is None:
+            return None
+        v = v.upper()
+        if len(v) != 2 or not v.isalpha():
+            raise ValueError("country must be a 2-letter ISO 3166-1 alpha-2 code (e.g. ID, US).")
+        return v
+
+    @field_validator("state", mode="before")
+    @classmethod
+    def _validate_state(cls, v: str | None) -> str | None:
+        v = _trim(v)
+        if v is None:
+            return None
+        try:
+            uuid.UUID(v)
+        except ValueError:
+            raise ValueError("state must be a valid UUID (geo state id).")
+        return v
+
+    @field_validator("city", mode="before")
+    @classmethod
+    def _validate_city(cls, v: str | None) -> str | None:
+        v = _trim(v)
+        if v is None:
+            return None
+        try:
+            uuid.UUID(v)
+        except ValueError:
+            raise ValueError("city must be a valid UUID (geo city id).")
+        return v
 
     @field_validator("email", mode="before")
     @classmethod
@@ -143,7 +184,7 @@ class CompanyCreate(_CompanyFieldsMixin):
     # useful profile — enforced here, not via a schema change.
     name: str = Field(min_length=1, max_length=255)
     phone: str = Field(min_length=1, max_length=50)
-    country: str = Field(min_length=1, max_length=100)
+    country: str = Field(min_length=2, max_length=2)
 
     @field_validator("name", mode="before")
     @classmethod
@@ -180,7 +221,7 @@ class CompanyUpdate(_CompanyFieldsMixin):
     # them is rejected — a company may never end up without a name/phone/country.
     name: str | None = Field(default=None, min_length=1, max_length=255)
     phone: str | None = Field(default=None, min_length=1, max_length=50)
-    country: str | None = Field(default=None, min_length=1, max_length=100)
+    country: str | None = Field(default=None, min_length=2, max_length=2)
 
     @field_validator("name", mode="before")
     @classmethod

@@ -42,12 +42,18 @@
       <AppField :label="t('contacts.fields.lifecycle_stage')" name="lifecycle_stage">
         <USelect v-model="lifecycleStageModel" :items="lifecycleOptions" :disabled="isSaving" class="w-full" />
       </AppField>
-      <AppField :label="t('contacts.fields.city')" name="city">
-        <AppInput v-model="form.city" :disabled="isSaving" />
-      </AppField>
-      <AppField :label="t('contacts.fields.country')" name="country">
-        <AppInput v-model="form.country" :disabled="isSaving" />
-      </AppField>
+      <!-- Renders as 3 separate fields (Country / State / City), each with
+           its own label; State disabled until Country is picked, City
+           disabled until State is picked — see AppLocationSelect.vue. -->
+      <AppLocationSelect
+        :country="form.country"
+        :state="form.state"
+        :city="form.city"
+        :disabled="isSaving"
+        @update:country="form.country = $event ?? ''"
+        @update:state="form.state = $event ?? ''"
+        @update:city="form.city = $event ?? ''"
+      />
     </div>
     <AppField :label="t('contacts.fields.description')" name="description">
       <UTextarea v-model="form.description" :rows="3" :disabled="isSaving" class="w-full" />
@@ -108,6 +114,7 @@ const emptyForm = {
   lifecycle_stage: '' as LifecycleStage | '',
   lead_source: '',
   city: '',
+  state: '',
   country: '',
   description: '',
 }
@@ -138,6 +145,7 @@ watch(() => props.contact, async (contact) => {
     lifecycle_stage: contact.lifecycle_stage ?? '',
     lead_source: contact.lead_source ?? '',
     city: contact.city ?? '',
+    state: contact.state ?? '',
     country: contact.country ?? '',
     description: contact.description ?? '',
   })
@@ -170,8 +178,13 @@ const schema = computed(() => z.object({
     z.enum(LIFECYCLE_STAGES as [LifecycleStage, ...LifecycleStage[]]),
   ),
   lead_source: z.string().max(50, maxMsg(50)),
-  city: z.string().max(100, maxMsg(100)),
-  country: z.string().max(100, maxMsg(100)),
+  // country/state/city come from AppLocationSelect (issue #26), not free
+  // text — always '' or a valid code/id picked from the backend's list, so
+  // no length/format check is needed here (the backend still validates
+  // existence + cascade consistency on submit).
+  city: z.string(),
+  state: z.string(),
+  country: z.string(),
   description: z.string(),
 }))
 
@@ -200,15 +213,31 @@ const lifecycleStageModel = computed({
  * mode only include fields whose value changed (partial PATCH).
  */
 function buildPayload(): ContactUpdatePayload {
-  const payload: Record<string, string | null> = {}
+  const payload: Record<string, unknown> = {}
   for (const [key, raw] of Object.entries(form)) {
     const value = typeof raw === 'string' ? raw.trim() : raw
-    if (props.contact && value === original[key as keyof typeof original]) {
+
+    if (props.contact) {
+      const originalValue = original[key as keyof typeof original]
+      if (value === originalValue) continue
+      if (value === '' && key !== 'first_name') {
+        // Was populated, now cleared - send an explicit null so the backend
+        // actually unsets it. Omitting it here would silently keep the
+        // stale DB value: AppLocationSelect resets state/city to '' when
+        // the user picks a new country, and if that clear never reaches
+        // the backend, the old state/city gets re-validated against the
+        // new country and 422s (see PR #39 review).
+        payload[key] = null
+        continue
+      }
+      payload[key] = value
       continue
     }
-    if (value === '' && key !== 'first_name') {
-      continue
-    }
+
+    // Create mode: omit blank optional fields so required-field validation
+    // (e.g. companies' required `country`) surfaces its own clear error
+    // rather than a generic "may not be null".
+    if (value === '' && key !== 'first_name') continue
     payload[key] = value
   }
   return payload as ContactUpdatePayload

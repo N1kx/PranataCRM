@@ -18,6 +18,7 @@ import app.modules.deals.models  # noqa: F401
 import app.modules.ai.models  # noqa: F401
 import app.modules.billing.models  # noqa: F401
 import app.modules.reporting.models  # noqa: F401
+import app.modules.geo.models  # noqa: F401
 
 config = context.config
 settings = get_settings()

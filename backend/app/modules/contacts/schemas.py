@@ -57,10 +57,17 @@ class _ContactFieldsMixin(BaseModel):
     company_id: str | None = None
     owner_id: str | None = None
     address_line1: str | None = Field(default=None, max_length=255)
+    # city/state/country are structured references into the geo module
+    # (issue #26), not free text: country is an ISO 3166-1 alpha-2 code,
+    # state/city are geo_states.id / geo_cities.id (UUID strings). Format is
+    # validated here; existence + cross-parent consistency (state belongs to
+    # country, city belongs to state) is validated in ContactUseCase via
+    # GeoContractProtocol, mirroring how company_id/owner_id existence is
+    # validated.
     city: str | None = Field(default=None, max_length=100)
     state: str | None = Field(default=None, max_length=100)
     postal_code: str | None = Field(default=None, max_length=20)
-    country: str | None = Field(default=None, max_length=100)
+    country: str | None = Field(default=None, min_length=2, max_length=2)
     description: str | None = None
     tags: list[str] | None = None
     custom_fields: dict | None = None
@@ -68,13 +75,48 @@ class _ContactFieldsMixin(BaseModel):
     @field_validator(
         "last_name", "phone", "mobile_phone", "job_title", "department",
         "lead_source", "preferred_language", "linkedin_url",
-        "address_line1", "city", "state", "postal_code", "country",
+        "address_line1", "postal_code",
         "description", "company_id", "owner_id",
         mode="before",
     )
     @classmethod
     def _trim_strings(cls, v: str | None) -> str | None:
         return _trim(v)
+
+    @field_validator("country", mode="before")
+    @classmethod
+    def _normalize_country(cls, v: str | None) -> str | None:
+        v = _trim(v)
+        if v is None:
+            return None
+        v = v.upper()
+        if len(v) != 2 or not v.isalpha():
+            raise ValueError("country must be a 2-letter ISO 3166-1 alpha-2 code (e.g. ID, US).")
+        return v
+
+    @field_validator("state", mode="before")
+    @classmethod
+    def _validate_state(cls, v: str | None) -> str | None:
+        v = _trim(v)
+        if v is None:
+            return None
+        try:
+            uuid.UUID(v)
+        except ValueError:
+            raise ValueError("state must be a valid UUID (geo state id).")
+        return v
+
+    @field_validator("city", mode="before")
+    @classmethod
+    def _validate_city(cls, v: str | None) -> str | None:
+        v = _trim(v)
+        if v is None:
+            return None
+        try:
+            uuid.UUID(v)
+        except ValueError:
+            raise ValueError("city must be a valid UUID (geo city id).")
+        return v
 
     @field_validator("email", "secondary_email", mode="before")
     @classmethod

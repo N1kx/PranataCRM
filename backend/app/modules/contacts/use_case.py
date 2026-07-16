@@ -10,6 +10,7 @@ from app.modules.contacts.schemas import (
 from app.modules.contacts.service import ContactService
 from app.shared.contracts.auth_contract import AuthContractProtocol
 from app.shared.contracts.company_contract import CompanyContractProtocol
+from app.shared.contracts.geo_contract import GeoContractProtocol
 
 
 class ContactUseCase:
@@ -18,18 +19,21 @@ class ContactUseCase:
     contacts data, so there is no ContactContractProtocol yet (see
     shared/contracts/contact_contract.py); this will implement it once one is
     needed. Depends on CompanyContractProtocol (not the concrete companies
-    module) to validate a company_id reference, and on AuthContractProtocol
-    to validate an owner_id reference."""
+    module) to validate a company_id reference, on AuthContractProtocol to
+    validate an owner_id reference, and on GeoContractProtocol to validate
+    the country/state/city location (issue #26)."""
 
     def __init__(
         self,
         service: ContactService,
         companies: CompanyContractProtocol,
         auth: AuthContractProtocol,
+        geo: GeoContractProtocol,
     ) -> None:
         self._service = service
         self._companies = companies
         self._auth = auth
+        self._geo = geo
 
     async def _validate_company_id(self, tenant_id: uuid.UUID, company_id: str | None) -> None:
         if company_id is None:
@@ -43,11 +47,37 @@ class ContactUseCase:
         if not await self._auth.user_exists(tenant_id, uuid.UUID(owner_id)):
             raise InvalidOwnerReference()
 
+    @staticmethod
+    def _safe_uuid(value: str | None) -> uuid.UUID | None:
+        # `value` may come from the currently-stored row (see
+        # update_contact's merge below), which can still hold pre-#26
+        # free-text state/city on rows nobody has re-saved yet. A malformed
+        # value can never come from the payload itself — ContactUpdate's own
+        # validators already reject a non-UUID state/city with a 422 before
+        # this is reached — so treat it as "no location on file" rather than
+        # raising, or every PATCH to a legacy row would 500.
+        if value is None:
+            return None
+        try:
+            return uuid.UUID(value)
+        except ValueError:
+            return None
+
+    async def _validate_location(
+        self, country: str | None, state: str | None, city: str | None
+    ) -> None:
+        await self._geo.validate_location(
+            country,
+            self._safe_uuid(state),
+            self._safe_uuid(city),
+        )
+
     async def create_contact(
         self, tenant_id: uuid.UUID, actor_id: uuid.UUID, payload: ContactCreate
     ) -> ContactResponse:
         await self._validate_company_id(tenant_id, payload.company_id)
         await self._validate_owner_id(tenant_id, payload.owner_id)
+        await self._validate_location(payload.country, payload.state, payload.city)
         return await self._service.create_contact(tenant_id, actor_id, payload)
 
     async def get_contact(
@@ -99,6 +129,17 @@ class ContactUseCase:
             await self._validate_company_id(tenant_id, payload.company_id)
         if "owner_id" in payload.model_fields_set:
             await self._validate_owner_id(tenant_id, payload.owner_id)
+        if payload.model_fields_set & {"country", "state", "city"}:
+            # See CompanyUseCase.update_company for why this must validate
+            # the *effective* location (payload merged onto current values),
+            # not the payload in isolation.
+            current = await self._service.get_contact(tenant_id, contact_id)
+            country = (
+                payload.country if "country" in payload.model_fields_set else current.country
+            )
+            state = payload.state if "state" in payload.model_fields_set else current.state
+            city = payload.city if "city" in payload.model_fields_set else current.city
+            await self._validate_location(country, state, city)
         return await self._service.update_contact(tenant_id, contact_id, actor_id, payload)
 
     async def delete_contact(self, tenant_id: uuid.UUID, contact_id: uuid.UUID) -> None:

@@ -87,6 +87,7 @@
     "team": "Team & Seats",
     "roles": "Roles & Access",
     "billing": "Billing",
+    "geo": "Locations",
     "collapse_sidebar": "Collapse sidebar",
     "expand_sidebar": "Expand sidebar"
   },
@@ -141,6 +142,7 @@
       "lifecycle_stage": "Lifecycle stage",
       "lead_source": "Lead source",
       "city": "City",
+      "state": "State/Province",
       "country": "Country",
       "description": "Description",
       "created_at": "Created at"
@@ -178,6 +180,28 @@
     "no_results": "No teammates found",
     "unassigned": "Unassigned"
   },
+  "location_select": {
+    "country_label": "Country",
+    "state_label": "State/Province",
+    "city_label": "City",
+    "country_placeholder": "Select country",
+    "state_placeholder": "Select state/province",
+    "city_placeholder": "Select city",
+    "search_placeholder": "Search...",
+    "no_results": "No results found"
+  },
+  "geo_admin": {
+    "title": "Locations",
+    "description": "Manage states/provinces and cities used by the location fields on contacts and companies. Countries follow the ISO standard and cannot be added or removed here.",
+    "owner_only": "Only the workspace owner can manage locations.",
+    "country": "Country",
+    "states_title": "States/provinces in {country}",
+    "cities_title": "Cities in {state}",
+    "new_state_placeholder": "New state/province name",
+    "new_city_placeholder": "New city name",
+    "add": "Add",
+    "delete": "Delete"
+  },
   "error": {
     "CONTACT_NOT_FOUND": "Contact not found.",
     "AUTH_INVALID_CREDENTIALS": "Incorrect email or password.",
@@ -188,6 +212,9 @@
     "AUTH_INVITE_INVALID": "Invitation is invalid or has expired.",
     "AUTH_PERMISSION_DENIED": "You don't have permission for this action.",
     "AUTH_NOT_AUTHENTICATED": "Your session has ended. Please sign in again.",
+    "INVALID_COUNTRY_REFERENCE": "Please select a valid country.",
+    "INVALID_STATE_REFERENCE": "Please select a valid state/province for the chosen country.",
+    "INVALID_CITY_REFERENCE": "Please select a valid city for the chosen state/province.",
     "INTERNAL_ERROR": "An error occurred. Please try again.",
     "unknown": "An unexpected error occurred."
   },
