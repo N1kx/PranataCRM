@@ -99,6 +99,36 @@ const countryName = ref('')
 const stateName = ref('')
 const cityName = ref('')
 
+// Best-effort: resolves country/state/city ids to display labels. Wrapped
+// in its own try/catch so a lookup failure (e.g. a legacy free-text
+// country like "Indonesia" that isn't a valid ISO code, which 422s
+// listStates) only leaves the location labels blank — it must never fail
+// the whole page when the contact itself loaded fine.
+async function resolveLocationLabels(c: Contact) {
+  try {
+    if (c.country) {
+      const countries = await listCountries()
+      countryName.value = countries.find(x => x.value === c.country)?.label ?? ''
+    }
+    if (c.state) {
+      // The states-by-country / cities-by-state lists are each the full
+      // active set for that scope (small, backend-cached) — it's also how
+      // we resolve the selected state/city's label, no separate /lookup
+      // endpoint needed.
+      const states = await listStates(c.country ?? '')
+      stateName.value = states.find(x => x.value === c.state)?.label ?? ''
+    }
+    if (c.city && c.state) {
+      const cities = await listCities(c.state)
+      cityName.value = cities.find(x => x.value === c.city)?.label ?? ''
+    }
+  }
+  catch {
+    // Swallow — labels simply stay blank, the contact detail itself is
+    // still valid and must keep rendering.
+  }
+}
+
 async function loadContact() {
   isLoading.value = true
   loadErrorCode.value = ''
@@ -107,30 +137,17 @@ async function loadContact() {
   cityName.value = ''
   try {
     contact.value = await get(contactId)
-    const c = contact.value
-    if (c?.country) {
-      const countries = await listCountries()
-      countryName.value = countries.find(x => x.value === c.country)?.label ?? ''
-    }
-    if (c?.state) {
-      // The states-by-country / cities-by-state lists are each the full
-      // active set for that scope (small, backend-cached) — it's also how
-      // we resolve the selected state/city's label, no separate /lookup
-      // endpoint needed.
-      const states = await listStates(c.country ?? '')
-      stateName.value = states.find(x => x.value === c.state)?.label ?? ''
-    }
-    if (c?.city && c?.state) {
-      const cities = await listCities(c.state)
-      cityName.value = cities.find(x => x.value === c.city)?.label ?? ''
-    }
   }
   catch (err: unknown) {
     const e = err as { code?: string }
     loadErrorCode.value = e.code ?? 'unknown'
+    return
   }
   finally {
     isLoading.value = false
+  }
+  if (contact.value) {
+    await resolveLocationLabels(contact.value)
   }
 }
 

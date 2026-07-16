@@ -34,13 +34,29 @@ class CompanyUseCase:
         if not await self._auth.user_exists(tenant_id, uuid.UUID(owner_id)):
             raise InvalidOwnerReference()
 
+    @staticmethod
+    def _safe_uuid(value: str | None) -> uuid.UUID | None:
+        # `value` may come from the currently-stored row (see
+        # update_company's merge below), which can still hold pre-#26
+        # free-text state/city on rows nobody has re-saved yet. A malformed
+        # value can never come from the payload itself — CompanyUpdate's own
+        # validators already reject a non-UUID state/city with a 422 before
+        # this is reached — so treat it as "no location on file" rather than
+        # raising, or every PATCH to a legacy row would 500.
+        if value is None:
+            return None
+        try:
+            return uuid.UUID(value)
+        except ValueError:
+            return None
+
     async def _validate_location(
         self, country: str | None, state: str | None, city: str | None
     ) -> None:
         await self._geo.validate_location(
             country,
-            uuid.UUID(state) if state is not None else None,
-            uuid.UUID(city) if city is not None else None,
+            self._safe_uuid(state),
+            self._safe_uuid(city),
         )
 
     async def create_company(

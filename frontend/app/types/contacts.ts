@@ -46,9 +46,12 @@ export interface ContactCreatePayload {
   status?: ContactStatus
   lifecycle_stage?: LifecycleStage
   lead_source?: string
-  city?: string
-  state?: string
-  country?: string
+  // Nullable (not just optional): AppLocationSelect's cascade reset needs to
+  // explicitly clear a previously-set state/city when the parent changes —
+  // see ContactsForm.vue's buildPayload.
+  city?: string | null
+  state?: string | null
+  country?: string | null
   description?: string
 }
 

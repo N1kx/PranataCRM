@@ -139,6 +139,13 @@ function onCitySelect(value: unknown) {
   emit('update:city', opt?.value ?? null)
 }
 
+// Monotonic sequence tokens so a slow, older request can't overwrite a
+// newer one's results if it resolves out of order (mirrors AppUserSelect's
+// searchSeq) — otherwise rapid country/state changes + a slow network could
+// leave `states`/`cities` populated with another scope's options.
+let statesSeq = 0
+let citiesSeq = 0
+
 // Refreshes the *available options* for the child level whenever the parent
 // value changes — covers both a user's cascading pick (handled above) and
 // an externally-set initial value (edit mode loading an existing record),
@@ -146,18 +153,22 @@ function onCitySelect(value: unknown) {
 watch(
   () => props.country,
   async (code) => {
+    const seq = ++statesSeq
     states.value = []
     cities.value = []
     if (!code) return
     loadingStates.value = true
     try {
-      states.value = await listStates(code)
+      const result = await listStates(code)
+      if (seq !== statesSeq) return
+      states.value = result
     }
     catch {
+      if (seq !== statesSeq) return
       states.value = []
     }
     finally {
-      loadingStates.value = false
+      if (seq === statesSeq) loadingStates.value = false
     }
   },
   { immediate: true },
@@ -166,17 +177,21 @@ watch(
 watch(
   () => props.state,
   async (stateId) => {
+    const seq = ++citiesSeq
     cities.value = []
     if (!stateId) return
     loadingCities.value = true
     try {
-      cities.value = await listCities(stateId)
+      const result = await listCities(stateId)
+      if (seq !== citiesSeq) return
+      cities.value = result
     }
     catch {
+      if (seq !== citiesSeq) return
       cities.value = []
     }
     finally {
-      loadingCities.value = false
+      if (seq === citiesSeq) loadingCities.value = false
     }
   },
   { immediate: true },

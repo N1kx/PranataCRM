@@ -213,15 +213,31 @@ const lifecycleStageModel = computed({
  * mode only include fields whose value changed (partial PATCH).
  */
 function buildPayload(): ContactUpdatePayload {
-  const payload: Record<string, string | null> = {}
+  const payload: Record<string, unknown> = {}
   for (const [key, raw] of Object.entries(form)) {
     const value = typeof raw === 'string' ? raw.trim() : raw
-    if (props.contact && value === original[key as keyof typeof original]) {
+
+    if (props.contact) {
+      const originalValue = original[key as keyof typeof original]
+      if (value === originalValue) continue
+      if (value === '' && key !== 'first_name') {
+        // Was populated, now cleared - send an explicit null so the backend
+        // actually unsets it. Omitting it here would silently keep the
+        // stale DB value: AppLocationSelect resets state/city to '' when
+        // the user picks a new country, and if that clear never reaches
+        // the backend, the old state/city gets re-validated against the
+        // new country and 422s (see PR #39 review).
+        payload[key] = null
+        continue
+      }
+      payload[key] = value
       continue
     }
-    if (value === '' && key !== 'first_name') {
-      continue
-    }
+
+    // Create mode: omit blank optional fields so required-field validation
+    // (e.g. companies' required `country`) surfaces its own clear error
+    // rather than a generic "may not be null".
+    if (value === '' && key !== 'first_name') continue
     payload[key] = value
   }
   return payload as ContactUpdatePayload
