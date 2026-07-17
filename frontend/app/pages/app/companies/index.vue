@@ -88,7 +88,7 @@
         <UTable :data="items" :columns="columns" :loading="isLoading">
           <template v-for="col in sortableColumns" :key="col" #[`${col}-header`]>
             <button type="button" class="flex items-center gap-1" @click="toggleSort(col)">
-              {{ t(`companies.table.${col === 'name' ? 'name' : col}`) }}
+              {{ t(`companies.table.${col}`) }}
               <UIcon v-if="sort === col" :name="order === 'asc' ? 'i-lucide-arrow-up' : 'i-lucide-arrow-down'" class="w-3.5 h-3.5" />
             </button>
           </template>
@@ -283,7 +283,7 @@ watch([page, q, status, companyType, size, industry, sort, order], () => {
       ...(order.value !== 'desc' ? { order: order.value } : {}),
     },
   })
-}, { deep: true })
+})
 
 // ── List state ────────────────────────────────────────────────────────────────
 
@@ -304,7 +304,13 @@ const columns = computed<TableColumn<Company>[]>(() => [
   { id: 'actions', header: '' },
 ])
 
+// Monotonic token so a slow earlier request (e.g. rapid filter/sort changes on
+// a slow network) can't overwrite a newer one's results if it resolves out of
+// order — mirrors AppUserSelect's searchSeq.
+let loadSeq = 0
+
 async function loadCompanies() {
+  const seq = ++loadSeq
   isLoading.value = true
   loadError.value = false
   try {
@@ -319,15 +325,17 @@ async function loadCompanies() {
       sort: sort.value,
       order: order.value,
     })
+    if (seq !== loadSeq) return
     items.value = res.items
     total.value = res.total
   }
   catch {
+    if (seq !== loadSeq) return
     loadError.value = true
     return
   }
   finally {
-    isLoading.value = false
+    if (seq === loadSeq) isLoading.value = false
   }
   // Owner names are a secondary enrichment: resolve them separately so a lookup
   // failure degrades to "-" instead of blanking the whole (already loaded) list.

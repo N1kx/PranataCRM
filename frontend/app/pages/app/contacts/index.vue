@@ -78,8 +78,8 @@
         <UTable :data="items" :columns="columns" :loading="isLoading">
           <template v-for="col in sortableColumns" :key="col" #[`${col}-header`]>
             <button type="button" class="flex items-center gap-1" @click="toggleSort(col)">
-              {{ t(`contacts.table.${col === 'name' ? 'name' : col}`) }}
-              <UIcon v-if="sort === col" :name="order === 'asc' ? 'i-lucide-arrow-up' : 'i-lucide-arrow-down'" class="w-3.5 h-3.5" />
+              {{ t(`contacts.table.${col}`) }}
+              <UIcon v-if="sort === COLUMN_TO_SORT_FIELD[col]" :name="order === 'asc' ? 'i-lucide-arrow-up' : 'i-lucide-arrow-down'" class="w-3.5 h-3.5" />
             </button>
           </template>
 
@@ -163,14 +163,11 @@ const router = useRouter()
 const ALL = '__all__'
 const SORTABLE_FIELDS = ['created_at', 'first_name', 'last_name', 'email', 'status'] as const
 const sortableColumns = ['name', 'email', 'status']
-// The Name column sorts server-side by first_name (mirrors how it's displayed).
+// The Name column sorts server-side by first_name (mirrors how it's displayed);
+// this maps each sortable column id to its backend sort field. Used both to
+// build the sort param on click and to light up the active column's arrow.
 const COLUMN_TO_SORT_FIELD: Record<string, typeof SORTABLE_FIELDS[number]> = {
   name: 'first_name',
-  email: 'email',
-  status: 'status',
-}
-const SORT_FIELD_TO_COLUMN: Record<string, string> = {
-  first_name: 'name',
   email: 'email',
   status: 'status',
 }
@@ -264,7 +261,7 @@ watch([page, q, status, lifecycleStage, sort, order], () => {
       ...(order.value !== 'desc' ? { order: order.value } : {}),
     },
   })
-}, { deep: true })
+})
 
 // ── List state ────────────────────────────────────────────────────────────────
 
@@ -285,7 +282,13 @@ const columns = computed<TableColumn<Contact>[]>(() => [
   { id: 'actions', header: '' },
 ])
 
+// Monotonic token so a slow earlier request (e.g. rapid filter/sort changes on
+// a slow network) can't overwrite a newer one's results if it resolves out of
+// order — mirrors AppUserSelect's searchSeq.
+let loadSeq = 0
+
 async function loadContacts() {
+  const seq = ++loadSeq
   isLoading.value = true
   loadError.value = false
   try {
@@ -298,15 +301,17 @@ async function loadContacts() {
       sort: sort.value,
       order: order.value,
     })
+    if (seq !== loadSeq) return
     items.value = res.items
     total.value = res.total
   }
   catch {
+    if (seq !== loadSeq) return
     loadError.value = true
     return
   }
   finally {
-    isLoading.value = false
+    if (seq === loadSeq) isLoading.value = false
   }
   // Owner names are a secondary enrichment: resolve them separately so a lookup
   // failure degrades to "-" instead of blanking the whole (already loaded) list.
