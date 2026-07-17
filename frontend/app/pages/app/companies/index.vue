@@ -3,10 +3,10 @@
     <!-- Header -->
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-        {{ t('contacts.title') }}
+        {{ t('companies.title') }}
       </h1>
-      <AppButton color="primary" icon="i-lucide-user-plus" @click="navigateTo('/app/contacts/new')">
-        {{ t('contacts.add') }}
+      <AppButton color="primary" icon="i-lucide-building-2" @click="navigateTo('/app/companies/new')">
+        {{ t('companies.add') }}
       </AppButton>
     </div>
 
@@ -19,7 +19,7 @@
       :title="t('common.error_state')"
     >
       <template #description>
-        <AppButton color="error" variant="outline" size="xs" class="mt-2" @click="loadContacts">
+        <AppButton color="error" variant="outline" size="xs" class="mt-2" @click="loadCompanies">
           {{ t('common.retry') }}
         </AppButton>
       </template>
@@ -32,7 +32,7 @@
           v-model="searchInput"
           icon="i-lucide-search"
           class="w-full sm:w-64"
-          :placeholder="t('contacts.search_placeholder')"
+          :placeholder="t('companies.search_placeholder')"
         />
         <USelect
           v-model="statusModel"
@@ -40,9 +40,19 @@
           class="w-full sm:w-40"
         />
         <USelect
-          v-model="lifecycleModel"
-          :items="lifecycleFilterOptions"
+          v-model="companyTypeModel"
+          :items="companyTypeFilterOptions"
+          class="w-full sm:w-40"
+        />
+        <USelect
+          v-model="sizeModel"
+          :items="sizeFilterOptions"
+          class="w-full sm:w-40"
+        />
+        <AppInput
+          v-model="industryInput"
           class="w-full sm:w-48"
+          :placeholder="t('companies.filter_industry')"
         />
         <AppButton
           v-if="hasActiveFilters"
@@ -51,7 +61,7 @@
           size="xs"
           @click="clearFilters"
         >
-          {{ t('contacts.clear_filters') }}
+          {{ t('companies.clear_filters') }}
         </AppButton>
       </div>
 
@@ -65,12 +75,12 @@
 
       <!-- Empty state -->
       <div v-else-if="!items.length" class="text-center py-12 text-gray-400">
-        <UIcon name="i-lucide-users" class="w-10 h-10 mx-auto mb-3" />
+        <UIcon name="i-lucide-building-2" class="w-10 h-10 mx-auto mb-3" />
         <p class="text-sm">
-          {{ hasActiveFilters ? t('contacts.no_results') : t('common.empty') }}
+          {{ hasActiveFilters ? t('companies.no_results') : t('common.empty') }}
         </p>
         <AppButton v-if="hasActiveFilters" color="neutral" variant="outline" size="xs" class="mt-3" @click="clearFilters">
-          {{ t('contacts.clear_filters') }}
+          {{ t('companies.clear_filters') }}
         </AppButton>
       </div>
 
@@ -78,32 +88,34 @@
         <UTable :data="items" :columns="columns" :loading="isLoading">
           <template v-for="col in sortableColumns" :key="col" #[`${col}-header`]>
             <button type="button" class="flex items-center gap-1" @click="toggleSort(col)">
-              {{ t(`contacts.table.${col === 'name' ? 'name' : col}`) }}
+              {{ t(`companies.table.${col === 'name' ? 'name' : col}`) }}
               <UIcon v-if="sort === col" :name="order === 'asc' ? 'i-lucide-arrow-up' : 'i-lucide-arrow-down'" class="w-3.5 h-3.5" />
             </button>
           </template>
 
           <template #name-cell="{ row }">
             <NuxtLink
-              :to="`/app/contacts/${row.original.id}`"
+              :to="`/app/companies/${row.original.id}`"
               class="font-medium text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400"
             >
-              {{ contactFullName(row.original) }}
+              {{ companyDisplayName(row.original) }}
             </NuxtLink>
           </template>
-          <template #email-cell="{ row }">
-            {{ row.original.email || '-' }}
+          <template #domain-cell="{ row }">
+            {{ row.original.domain || '-' }}
           </template>
-          <template #phone-cell="{ row }">
-            {{ row.original.phone || '-' }}
-          </template>
-          <template #job_title-cell="{ row }">
-            {{ row.original.job_title || '-' }}
+          <template #company_type-cell="{ row }">
+            <UBadge :color="companyTypeColor(row.original.company_type)" variant="subtle">
+              {{ t(`companies.type.${row.original.company_type}`) }}
+            </UBadge>
           </template>
           <template #status-cell="{ row }">
-            <UBadge :color="contactStatusColor(row.original.status)" variant="subtle">
-              {{ t(`contacts.status.${row.original.status}`) }}
+            <UBadge :color="companyStatusColor(row.original.status)" variant="subtle">
+              {{ t(`companies.status.${row.original.status}`) }}
             </UBadge>
+          </template>
+          <template #employee_count-cell="{ row }">
+            {{ row.original.employee_count != null ? row.original.employee_count : '-' }}
           </template>
           <template #owner-cell="{ row }">
             {{ row.original.owner_id ? (ownerNames[row.original.owner_id] ?? '-') : '-' }}
@@ -123,10 +135,10 @@
     </UCard>
 
     <!-- Delete confirmation modal -->
-    <UModal v-model:open="deleteModalOpen" :title="t('contacts.confirm_delete_title')">
+    <UModal v-model:open="deleteModalOpen" :title="t('companies.confirm_delete_title')">
       <template #body>
         <p class="text-sm text-gray-600 dark:text-gray-300">
-          {{ t('contacts.confirm_delete_body', { name: deleteTarget ? contactFullName(deleteTarget) : '' }) }}
+          {{ t('companies.confirm_delete_body', { name: deleteTarget ? companyDisplayName(deleteTarget) : '' }) }}
         </p>
       </template>
 
@@ -136,7 +148,7 @@
             {{ t('common.cancel') }}
           </AppButton>
           <AppButton color="error" :loading="isDeleting" @click="onDelete">
-            {{ t('contacts.delete') }}
+            {{ t('companies.delete') }}
           </AppButton>
         </div>
       </template>
@@ -146,34 +158,24 @@
 
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import type { Contact, ContactStatus, LifecycleStage } from '~/types/contacts'
+import type { Company, CompanySize, CompanyStatus, CompanyType } from '~/types/companies'
 
 definePageMeta({ layout: 'app', middleware: 'auth' })
 
 const { t } = useI18n()
-const { list, remove } = useContacts()
+const { list, remove } = useCompanies()
 const { lookup } = useUsers()
 const toast = useToast()
 const route = useRoute()
 const router = useRouter()
 
 // ── URL-synced filter/sort/pagination state ─────────────────────────────────
-// Kept in the URL query so the view is shareable/back-button friendly.
+// Kept in the URL query so the view is shareable/back-button friendly
+// (same approach as contacts, see #23).
 
 const ALL = '__all__'
-const SORTABLE_FIELDS = ['created_at', 'first_name', 'last_name', 'email', 'status'] as const
-const sortableColumns = ['name', 'email', 'status']
-// The Name column sorts server-side by first_name (mirrors how it's displayed).
-const COLUMN_TO_SORT_FIELD: Record<string, typeof SORTABLE_FIELDS[number]> = {
-  name: 'first_name',
-  email: 'email',
-  status: 'status',
-}
-const SORT_FIELD_TO_COLUMN: Record<string, string> = {
-  first_name: 'name',
-  email: 'email',
-  status: 'status',
-}
+const SORTABLE_FIELDS = ['name', 'company_type', 'status', 'employee_count', 'created_at'] as const
+const sortableColumns = ['name', 'company_type', 'status', 'employee_count']
 
 function readQuery() {
   const q = route.query
@@ -181,7 +183,9 @@ function readQuery() {
     page: Number(q.page) > 0 ? Number(q.page) : 1,
     q: typeof q.q === 'string' ? q.q : '',
     status: typeof q.status === 'string' ? q.status : '',
-    lifecycleStage: typeof q.lifecycle_stage === 'string' ? q.lifecycle_stage : '',
+    companyType: typeof q.company_type === 'string' ? q.company_type : '',
+    size: typeof q.size === 'string' ? q.size : '',
+    industry: typeof q.industry === 'string' ? q.industry : '',
     sort: typeof q.sort === 'string' && (SORTABLE_FIELDS as readonly string[]).includes(q.sort) ? q.sort : 'created_at',
     order: (q.order === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc',
   }
@@ -190,76 +194,91 @@ function readQuery() {
 const initial = readQuery()
 const page = ref(initial.page)
 const searchInput = ref(initial.q)
-const status = ref<ContactStatus | ''>(initial.status as ContactStatus | '')
-const lifecycleStage = ref<LifecycleStage | ''>(initial.lifecycleStage as LifecycleStage | '')
+const industryInput = ref(initial.industry)
+const status = ref<CompanyStatus | ''>(initial.status as CompanyStatus | '')
+const companyType = ref<CompanyType | ''>(initial.companyType as CompanyType | '')
+const size = ref<CompanySize | ''>(initial.size as CompanySize | '')
 const sort = ref<typeof SORTABLE_FIELDS[number]>(initial.sort as typeof SORTABLE_FIELDS[number])
 const order = ref<'asc' | 'desc'>(initial.order)
 const pageSize = 20
 
 const statusModel = computed({
   get: () => status.value || ALL,
-  set: (v: string) => { status.value = (v === ALL ? '' : v) as ContactStatus | '' },
+  set: (v: string) => { status.value = (v === ALL ? '' : v) as CompanyStatus | '' },
 })
-const lifecycleModel = computed({
-  get: () => lifecycleStage.value || ALL,
-  set: (v: string) => { lifecycleStage.value = (v === ALL ? '' : v) as LifecycleStage | '' },
+const companyTypeModel = computed({
+  get: () => companyType.value || ALL,
+  set: (v: string) => { companyType.value = (v === ALL ? '' : v) as CompanyType | '' },
 })
-
-const CONTACT_STATUSES: ContactStatus[] = ['lead', 'qualified', 'customer', 'churned']
-const LIFECYCLE_STAGES: LifecycleStage[] = [
-  'subscriber', 'lead', 'mql', 'sql', 'opportunity', 'customer', 'evangelist',
-]
+const sizeModel = computed({
+  get: () => size.value || ALL,
+  set: (v: string) => { size.value = (v === ALL ? '' : v) as CompanySize | '' },
+})
 
 const statusFilterOptions = computed(() => [
-  { value: ALL, label: t('contacts.filter.status_all') },
-  ...CONTACT_STATUSES.map(v => ({ value: v, label: t(`contacts.status.${v}`) })),
+  { value: ALL, label: t('companies.filter_status') },
+  { value: 'active', label: t('companies.status.active') },
+  { value: 'inactive', label: t('companies.status.inactive') },
 ])
-const lifecycleFilterOptions = computed(() => [
-  { value: ALL, label: t('contacts.filter.lifecycle_all') },
-  ...LIFECYCLE_STAGES.map(v => ({ value: v, label: t(`contacts.lifecycle.${v}`) })),
+const companyTypeFilterOptions = computed(() => [
+  { value: ALL, label: t('companies.filter_type') },
+  ...(['prospect', 'customer', 'partner', 'vendor', 'competitor', 'other'] as CompanyType[])
+    .map(v => ({ value: v, label: t(`companies.type.${v}`) })),
+])
+const sizeFilterOptions = computed(() => [
+  { value: ALL, label: t('companies.filter_size') },
+  ...(['1-10', '11-50', '51-200', '201-500', '500+'] as CompanySize[]).map(v => ({ value: v, label: v })),
 ])
 
 const hasActiveFilters = computed(() =>
-  !!(searchInput.value || status.value || lifecycleStage.value),
+  !!(searchInput.value || status.value || companyType.value || size.value || industryInput.value),
 )
 
 function clearFilters() {
   searchInput.value = ''
+  industryInput.value = ''
   status.value = ''
-  lifecycleStage.value = ''
+  companyType.value = ''
+  size.value = ''
 }
 
 function toggleSort(col: string) {
-  const field = COLUMN_TO_SORT_FIELD[col]
-  if (!field) return
-  if (sort.value === field) {
+  if (sort.value === col) {
     order.value = order.value === 'asc' ? 'desc' : 'asc'
   }
   else {
-    sort.value = field
+    sort.value = col as typeof SORTABLE_FIELDS[number]
     order.value = 'asc'
   }
   page.value = 1
 }
 
-// Debounced search input.
+// Debounced search/industry text input.
 let searchDebounce: ReturnType<typeof setTimeout> | undefined
 const q = ref(initial.q)
 watch(searchInput, (v) => {
   if (searchDebounce) clearTimeout(searchDebounce)
   searchDebounce = setTimeout(() => { q.value = v; page.value = 1 }, 300)
 })
+let industryDebounce: ReturnType<typeof setTimeout> | undefined
+const industry = ref(initial.industry)
+watch(industryInput, (v) => {
+  if (industryDebounce) clearTimeout(industryDebounce)
+  industryDebounce = setTimeout(() => { industry.value = v; page.value = 1 }, 300)
+})
 
-watch([status, lifecycleStage], () => { page.value = 1 })
+watch([status, companyType, size], () => { page.value = 1 })
 
 // Sync state -> URL query (replace, not push, to avoid polluting history per keystroke).
-watch([page, q, status, lifecycleStage, sort, order], () => {
+watch([page, q, status, companyType, size, industry, sort, order], () => {
   router.replace({
     query: {
       ...(page.value > 1 ? { page: String(page.value) } : {}),
       ...(q.value ? { q: q.value } : {}),
       ...(status.value ? { status: status.value } : {}),
-      ...(lifecycleStage.value ? { lifecycle_stage: lifecycleStage.value } : {}),
+      ...(companyType.value ? { company_type: companyType.value } : {}),
+      ...(size.value ? { size: size.value } : {}),
+      ...(industry.value ? { industry: industry.value } : {}),
       ...(sort.value !== 'created_at' ? { sort: sort.value } : {}),
       ...(order.value !== 'desc' ? { order: order.value } : {}),
     },
@@ -268,24 +287,24 @@ watch([page, q, status, lifecycleStage, sort, order], () => {
 
 // ── List state ────────────────────────────────────────────────────────────────
 
-const items = ref<Contact[]>([])
+const items = ref<Company[]>([])
 const total = ref(0)
 const isLoading = ref(false)
 // id -> full_name map, resolved once per page load instead of per row.
 const ownerNames = ref<Record<string, string>>({})
 const loadError = ref(false)
 
-const columns = computed<TableColumn<Contact>[]>(() => [
-  { accessorKey: 'first_name', id: 'name', header: t('contacts.table.name') },
-  { accessorKey: 'email', header: t('contacts.table.email') },
-  { accessorKey: 'phone', header: t('contacts.table.phone') },
-  { accessorKey: 'job_title', header: t('contacts.table.job_title') },
-  { accessorKey: 'status', header: t('contacts.table.status') },
-  { accessorKey: 'owner_id', id: 'owner', header: t('contacts.table.owner') },
+const columns = computed<TableColumn<Company>[]>(() => [
+  { accessorKey: 'name', id: 'name', header: t('companies.table.name') },
+  { accessorKey: 'domain', header: t('companies.table.domain') },
+  { accessorKey: 'company_type', header: t('companies.table.company_type') },
+  { accessorKey: 'status', header: t('companies.table.status') },
+  { accessorKey: 'employee_count', header: t('companies.table.employee_count') },
+  { accessorKey: 'owner_id', id: 'owner', header: t('companies.table.owner') },
   { id: 'actions', header: '' },
 ])
 
-async function loadContacts() {
+async function loadCompanies() {
   isLoading.value = true
   loadError.value = false
   try {
@@ -294,7 +313,9 @@ async function loadContacts() {
       pageSize,
       q: q.value || undefined,
       status: status.value || undefined,
-      lifecycleStage: lifecycleStage.value || undefined,
+      companyType: companyType.value || undefined,
+      size: size.value || undefined,
+      industry: industry.value || undefined,
       sort: sort.value,
       order: order.value,
     })
@@ -313,8 +334,8 @@ async function loadContacts() {
   await loadOwnerNames(items.value)
 }
 
-async function loadOwnerNames(contacts: Contact[]) {
-  const ids = [...new Set(contacts.map(c => c.owner_id).filter((id): id is string => !!id))]
+async function loadOwnerNames(companies: Company[]) {
+  const ids = [...new Set(companies.map(c => c.owner_id).filter((id): id is string => !!id))]
   if (!ids.length) {
     ownerNames.value = {}
     return
@@ -331,23 +352,23 @@ async function loadOwnerNames(contacts: Contact[]) {
   }
 }
 
-onMounted(loadContacts)
-watch([page, q, status, lifecycleStage, sort, order], loadContacts)
+onMounted(loadCompanies)
+watch([page, q, status, companyType, size, industry, sort, order], loadCompanies)
 
-function rowActions(row: Contact) {
+function rowActions(row: Company) {
   return [[
     {
-      label: t('contacts.actions.view'),
+      label: t('companies.actions.view'),
       icon: 'i-lucide-eye',
-      onSelect: () => navigateTo(`/app/contacts/${row.id}`),
+      onSelect: () => navigateTo(`/app/companies/${row.id}`),
     },
     {
-      label: t('contacts.actions.edit'),
+      label: t('companies.actions.edit'),
       icon: 'i-lucide-pencil',
-      onSelect: () => navigateTo(`/app/contacts/${row.id}/edit`),
+      onSelect: () => navigateTo(`/app/companies/${row.id}/edit`),
     },
     {
-      label: t('contacts.actions.delete'),
+      label: t('companies.actions.delete'),
       icon: 'i-lucide-trash-2',
       onSelect: () => confirmDelete(row),
     },
@@ -357,10 +378,10 @@ function rowActions(row: Contact) {
 // ── Delete ────────────────────────────────────────────────────────────────────
 
 const deleteModalOpen = ref(false)
-const deleteTarget = ref<Contact | null>(null)
+const deleteTarget = ref<Company | null>(null)
 const isDeleting = ref(false)
 
-function confirmDelete(row: Contact) {
+function confirmDelete(row: Company) {
   deleteTarget.value = row
   deleteModalOpen.value = true
 }
@@ -370,7 +391,7 @@ async function onDelete() {
   isDeleting.value = true
   try {
     await remove(deleteTarget.value.id)
-    toast.add({ title: t('contacts.deleted'), color: 'success', icon: 'i-lucide-check-circle' })
+    toast.add({ title: t('companies.deleted'), color: 'success', icon: 'i-lucide-check-circle' })
     deleteModalOpen.value = false
     deleteTarget.value = null
     // If we deleted the last row of a page > 1, step back one page
@@ -379,7 +400,7 @@ async function onDelete() {
       page.value -= 1
     }
     else {
-      await loadContacts()
+      await loadCompanies()
     }
   }
   catch (err: unknown) {
