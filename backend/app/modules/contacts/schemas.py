@@ -51,6 +51,11 @@ class _ContactFieldsMixin(BaseModel):
     status: str | None = None
     lifecycle_stage: str | None = None
     lead_source: str | None = Field(default=None, max_length=50)
+    # Free-text detail, only meaningful when lead_source == 'other' (issue #40).
+    # No cross-field enforcement here — the frontend only sends this alongside
+    # lead_source == 'other', mirroring the rest of this schema's minimal-
+    # validation style (format/length only, no business-rule coupling).
+    lead_source_other: str | None = Field(default=None, max_length=100)
     preferred_contact_method: str | None = None
     preferred_language: str | None = Field(default=None, max_length=10)
     linkedin_url: str | None = Field(default=None, max_length=2048)
@@ -74,7 +79,7 @@ class _ContactFieldsMixin(BaseModel):
 
     @field_validator(
         "last_name", "phone", "mobile_phone", "job_title", "department",
-        "lead_source", "preferred_language", "linkedin_url",
+        "lead_source", "lead_source_other", "preferred_language", "linkedin_url",
         "address_line1", "postal_code",
         "description", "company_id", "owner_id",
         mode="before",
@@ -230,6 +235,7 @@ class ContactResponse(BaseModel):
     status: str
     lifecycle_stage: str | None
     lead_source: str | None
+    lead_source_other: str | None
     linkedin_url: str | None
     twitter_handle: str | None
     address_line1: str | None

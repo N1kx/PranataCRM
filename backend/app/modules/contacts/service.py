@@ -117,6 +117,7 @@ class ContactService:
             status=contact.status,
             lifecycle_stage=contact.lifecycle_stage,
             lead_source=contact.lead_source,
+            lead_source_other=contact.lead_source_other,
             linkedin_url=contact.linkedin_url,
             twitter_handle=contact.twitter_handle,
             address_line1=contact.address_line1,

@@ -55,6 +55,11 @@ class _CompanyFieldsMixin(BaseModel):
     arr: float | None = None
     annual_revenue: float | None = None
     source: str | None = Field(default=None, max_length=50)
+    # Free-text detail, only meaningful when source == 'other' (issue #40).
+    # No cross-field enforcement here — the frontend only sends this alongside
+    # source == 'other', mirroring the rest of this schema's minimal-validation
+    # style (format/length only, no business-rule coupling between fields).
+    source_other: str | None = Field(default=None, max_length=100)
     address_line1: str | None = Field(default=None, max_length=255)
     address_line2: str | None = Field(default=None, max_length=255)
     # city/state/country are structured references into the geo module
@@ -77,7 +82,7 @@ class _CompanyFieldsMixin(BaseModel):
 
     @field_validator(
         "owner_id", "legal_name", "domain", "website", "phone", "industry",
-        "source", "address_line1", "address_line2",
+        "source", "source_other", "address_line1", "address_line2",
         "postal_code", "timezone", "linkedin_url", "twitter_handle",
         "logo_url", "description",
         mode="before",
@@ -271,6 +276,7 @@ class CompanyResponse(BaseModel):
     arr: float | None
     annual_revenue: float | None
     source: str | None
+    source_other: str | None
     address_line1: str | None
     address_line2: str | None
     city: str | None

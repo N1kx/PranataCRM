@@ -149,6 +149,7 @@
       "status": "Status",
       "lifecycle_stage": "Tahap lifecycle",
       "lead_source": "Sumber lead",
+      "lead_source_other": "Sumber lead (lainnya)",
       "city": "Kota",
       "state": "Provinsi",
       "country": "Negara",
@@ -160,6 +161,17 @@
       "qualified": "Terkualifikasi",
       "customer": "Pelanggan",
       "churned": "Churned"
+    },
+    "lead_source": {
+      "none": "-",
+      "web": "Website",
+      "referral": "Referral",
+      "event": "Event",
+      "cold_call": "Telepon dingin",
+      "ad": "Iklan",
+      "social": "Media sosial",
+      "partner": "Mitra",
+      "other": "Lainnya"
     },
     "lifecycle": {
       "none": "-",
@@ -222,6 +234,7 @@
       "company_type": "Tipe perusahaan",
       "status": "Status",
       "source": "Sumber",
+      "source_other": "Sumber (lainnya)",
       "city": "Kota",
       "state": "Provinsi",
       "country": "Negara",
@@ -248,6 +261,17 @@
     "status": {
       "active": "Aktif",
       "inactive": "Tidak aktif"
+    },
+    "source": {
+      "none": "-",
+      "web": "Website",
+      "referral": "Referral",
+      "event": "Event",
+      "cold_call": "Telepon dingin",
+      "ad": "Iklan",
+      "social": "Media sosial",
+      "partner": "Mitra",
+      "other": "Lainnya"
     },
     "validation": {
       "name_required": "Nama wajib diisi",

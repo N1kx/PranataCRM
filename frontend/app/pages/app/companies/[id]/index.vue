@@ -165,6 +165,16 @@ async function loadCompany() {
 
 onMounted(loadCompany)
 
+// source is a bounded picklist (issue #40) — show the translated label, and
+// append the free-text detail when the 'other' option was picked.
+function sourceDisplay(c: Company): string {
+  if (!c.source) return ''
+  const label = t(`companies.source.${c.source}`)
+  return c.source === 'other' && c.source_other
+    ? `${label} - ${c.source_other}`
+    : label
+}
+
 const detailFields = computed(() => {
   const c = company.value
   if (!c) return []
@@ -177,7 +187,7 @@ const detailFields = computed(() => {
     { label: t('companies.fields.industry'), value: c.industry },
     { label: t('companies.fields.size'), value: c.size },
     { label: t('companies.fields.employee_count'), value: c.employee_count != null ? String(c.employee_count) : '' },
-    { label: t('companies.fields.source'), value: c.source },
+    { label: t('companies.fields.source'), value: sourceDisplay(c) },
     { label: t('companies.fields.country'), value: countryName.value },
     { label: t('companies.fields.state'), value: stateName.value },
     { label: t('companies.fields.city'), value: cityName.value },

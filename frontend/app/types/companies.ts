@@ -1,3 +1,5 @@
+import type { SourceValue } from '~/types/source'
+
 export type CompanyType = 'prospect' | 'customer' | 'partner' | 'vendor' | 'competitor' | 'other'
 export type CompanySize = '1-10' | '11-50' | '51-200' | '201-500' | '500+'
 export type CompanyStatus = 'active' | 'inactive'
@@ -16,7 +18,9 @@ export interface Company {
   employee_count?: number | null
   company_type: CompanyType
   status: CompanyStatus
-  source?: string | null
+  source?: SourceValue | null
+  /** Free-text detail, only meaningful when source === 'other' (issue #40). */
+  source_other?: string | null
   /** geo_cities.id (issue #26) — resolve the display name via useGeo(), not stored as text. */
   city?: string | null
   /** geo_states.id (issue #26) — resolve the display name via useGeo(), not stored as text. */
@@ -42,7 +46,8 @@ export interface CompanyCreatePayload {
   employee_count?: number
   company_type?: CompanyType
   status?: CompanyStatus
-  source?: string
+  source?: SourceValue
+  source_other?: string
   // Nullable (not just optional): AppLocationSelect's cascade reset needs to
   // explicitly clear a previously-set state/city when the parent changes —
   // see CompaniesForm.vue's buildPayload (mirrors ContactsForm.vue).

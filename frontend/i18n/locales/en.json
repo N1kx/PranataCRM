@@ -149,6 +149,7 @@
       "status": "Status",
       "lifecycle_stage": "Lifecycle stage",
       "lead_source": "Lead source",
+      "lead_source_other": "Lead source (other)",
       "city": "City",
       "state": "State/Province",
       "country": "Country",
@@ -160,6 +161,17 @@
       "qualified": "Qualified",
       "customer": "Customer",
       "churned": "Churned"
+    },
+    "lead_source": {
+      "none": "-",
+      "web": "Website",
+      "referral": "Referral",
+      "event": "Event",
+      "cold_call": "Cold call",
+      "ad": "Advertisement",
+      "social": "Social media",
+      "partner": "Partner",
+      "other": "Other"
     },
     "lifecycle": {
       "none": "-",
@@ -222,6 +234,7 @@
       "company_type": "Company type",
       "status": "Status",
       "source": "Source",
+      "source_other": "Source (other)",
       "city": "City",
       "state": "State/Province",
       "country": "Country",
@@ -248,6 +261,17 @@
     "status": {
       "active": "Active",
       "inactive": "Inactive"
+    },
+    "source": {
+      "none": "-",
+      "web": "Website",
+      "referral": "Referral",
+      "event": "Event",
+      "cold_call": "Cold call",
+      "ad": "Advertisement",
+      "social": "Social media",
+      "partner": "Partner",
+      "other": "Other"
     },
     "validation": {
       "name_required": "Name is required",
