@@ -205,16 +205,14 @@
     "filter_industry": "Industry",
     "table": {
       "name": "Name",
-      "domain": "Domain",
+      "phone": "Phone",
       "company_type": "Type",
       "status": "Status",
-      "employee_count": "Employees",
       "owner": "Owner"
     },
     "fields": {
       "name": "Name",
       "legal_name": "Legal name",
-      "domain": "Domain",
       "website": "Website",
       "email": "Email",
       "phone": "Phone",
@@ -259,7 +257,6 @@
       "max_length": "Maximum {max} characters",
       "email_invalid": "Invalid email format",
       "url_invalid": "Must be a valid URL (http/https)",
-      "domain_invalid": "Domain must not include a scheme or spaces (e.g. acme.com)",
       "employee_count_invalid": "Must be a non-negative whole number"
     },
     "actions": {

@@ -171,7 +171,6 @@ const detailFields = computed(() => {
   return [
     { label: t('companies.owner'), value: ownerName.value },
     { label: t('companies.fields.legal_name'), value: c.legal_name },
-    { label: t('companies.fields.domain'), value: c.domain },
     { label: t('companies.fields.website'), value: c.website },
     { label: t('companies.fields.email'), value: c.email },
     { label: t('companies.fields.phone'), value: c.phone },

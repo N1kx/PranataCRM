@@ -101,8 +101,8 @@
               {{ companyDisplayName(row.original) }}
             </NuxtLink>
           </template>
-          <template #domain-cell="{ row }">
-            {{ row.original.domain || '-' }}
+          <template #phone-cell="{ row }">
+            {{ row.original.phone || '-' }}
           </template>
           <template #company_type-cell="{ row }">
             <UBadge :color="companyTypeColor(row.original.company_type)" variant="subtle">
@@ -113,9 +113,6 @@
             <UBadge :color="companyStatusColor(row.original.status)" variant="subtle">
               {{ t(`companies.status.${row.original.status}`) }}
             </UBadge>
-          </template>
-          <template #employee_count-cell="{ row }">
-            {{ row.original.employee_count != null ? row.original.employee_count : '-' }}
           </template>
           <template #owner-cell="{ row }">
             {{ row.original.owner_id ? (ownerNames[row.original.owner_id] ?? '-') : '-' }}
@@ -174,8 +171,8 @@ const router = useRouter()
 // (same approach as contacts, see #23).
 
 const ALL = '__all__'
-const SORTABLE_FIELDS = ['name', 'company_type', 'status', 'employee_count', 'created_at'] as const
-const sortableColumns = ['name', 'company_type', 'status', 'employee_count']
+const SORTABLE_FIELDS = ['name', 'company_type', 'status', 'created_at'] as const
+const sortableColumns = ['name', 'company_type', 'status']
 
 function readQuery() {
   const q = route.query
@@ -296,10 +293,9 @@ const loadError = ref(false)
 
 const columns = computed<TableColumn<Company>[]>(() => [
   { accessorKey: 'name', id: 'name', header: t('companies.table.name') },
-  { accessorKey: 'domain', header: t('companies.table.domain') },
+  { accessorKey: 'phone', header: t('companies.table.phone') },
   { accessorKey: 'company_type', header: t('companies.table.company_type') },
   { accessorKey: 'status', header: t('companies.table.status') },
-  { accessorKey: 'employee_count', header: t('companies.table.employee_count') },
   { accessorKey: 'owner_id', id: 'owner', header: t('companies.table.owner') },
   { id: 'actions', header: '' },
 ])

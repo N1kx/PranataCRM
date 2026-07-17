@@ -205,16 +205,14 @@
     "filter_industry": "Industri",
     "table": {
       "name": "Nama",
-      "domain": "Domain",
+      "phone": "Telepon",
       "company_type": "Tipe",
       "status": "Status",
-      "employee_count": "Karyawan",
       "owner": "Pemilik"
     },
     "fields": {
       "name": "Nama",
       "legal_name": "Nama legal",
-      "domain": "Domain",
       "website": "Website",
       "email": "Email",
       "phone": "Telepon",
@@ -259,7 +257,6 @@
       "max_length": "Maksimal {max} karakter",
       "email_invalid": "Format email tidak valid",
       "url_invalid": "Harus berupa URL yang valid (http/https)",
-      "domain_invalid": "Domain tidak boleh berisi skema atau spasi (mis. acme.com)",
       "employee_count_invalid": "Harus berupa angka bulat non-negatif"
     },
     "actions": {

@@ -18,9 +18,6 @@
       <AppField :label="t('companies.owner')" name="owner_id">
         <AppUserSelect v-model="form.owner_id" :initial="ownerInitial" :disabled="isSaving" />
       </AppField>
-      <AppField :label="t('companies.fields.domain')" name="domain">
-        <AppInput v-model="form.domain" :disabled="isSaving" />
-      </AppField>
       <AppField :label="t('companies.fields.website')" name="website">
         <AppInput v-model="form.website" :disabled="isSaving" />
       </AppField>
@@ -113,7 +110,6 @@ const emptyForm = {
   owner_id: null as string | null,
   name: '',
   legal_name: '',
-  domain: '',
   website: '',
   email: '',
   phone: '',
@@ -147,7 +143,6 @@ watch(() => props.company, async (company) => {
     owner_id: company.owner_id ?? null,
     name: company.name,
     legal_name: company.legal_name ?? '',
-    domain: company.domain ?? '',
     website: company.website ?? '',
     email: company.email ?? '',
     phone: company.phone ?? '',
@@ -183,10 +178,6 @@ const schema = computed(() => z.object({
     .min(1, t('companies.validation.name_required'))
     .max(255, maxMsg(255)),
   legal_name: z.string().max(255, maxMsg(255)),
-  domain: z.literal('').or(
-    z.string().trim().max(255, maxMsg(255))
-      .refine(v => !v.includes('://') && !v.includes(' '), t('companies.validation.domain_invalid')),
-  ),
   website: optionalUrl,
   email: z.literal('').or(
     z.string().trim().email(t('companies.validation.email_invalid')).max(254, maxMsg(254)),
