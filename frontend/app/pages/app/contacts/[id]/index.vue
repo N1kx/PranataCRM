@@ -56,6 +56,23 @@
     <!-- Detail -->
     <UCard v-else-if="contact">
       <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+        <div>
+          <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            {{ t('contacts.company') }}
+          </dt>
+          <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+            <NuxtLink
+              v-if="contact.company_id"
+              :to="`/app/companies/${contact.company_id}`"
+              class="text-primary-600 dark:text-primary-400 hover:underline"
+            >
+              {{ companyName || '-' }}
+            </NuxtLink>
+            <template v-else>
+              -
+            </template>
+          </dd>
+        </div>
         <div v-for="field in detailFields" :key="field.label">
           <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
             {{ field.label }}
@@ -86,6 +103,7 @@ definePageMeta({ layout: 'app', middleware: 'auth' })
 const { t, locale } = useI18n()
 const { get } = useContacts()
 const { listCountries, listStates, listCities } = useGeo()
+const { lookup: lookupCompanies } = useCompanies()
 const route = useRoute()
 
 const contactId = route.params.id as string
@@ -98,6 +116,18 @@ const loadErrorCode = ref('')
 const countryName = ref('')
 const stateName = ref('')
 const cityName = ref('')
+const companyName = ref('')
+
+async function resolveCompanyName(c: Contact) {
+  if (!c.company_id) return
+  try {
+    const [company] = await lookupCompanies([c.company_id])
+    companyName.value = company?.name ?? ''
+  }
+  catch {
+    companyName.value = ''
+  }
+}
 
 // Best-effort: resolves country/state/city ids to display labels. Wrapped
 // in its own try/catch so a lookup failure (e.g. a legacy free-text
@@ -135,6 +165,7 @@ async function loadContact() {
   countryName.value = ''
   stateName.value = ''
   cityName.value = ''
+  companyName.value = ''
   try {
     contact.value = await get(contactId)
   }
@@ -147,7 +178,7 @@ async function loadContact() {
     isLoading.value = false
   }
   if (contact.value) {
-    await resolveLocationLabels(contact.value)
+    await Promise.all([resolveLocationLabels(contact.value), resolveCompanyName(contact.value)])
   }
 }
 

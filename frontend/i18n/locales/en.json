@@ -116,12 +116,20 @@
     "back_to_list": "Back to contacts",
     "delete": "Delete",
     "owner": "Owner",
+    "company": "Company",
     "submitting": "Saving...",
     "created": "Contact created successfully.",
     "saved": "Contact updated successfully.",
     "deleted": "Contact deleted successfully.",
     "confirm_delete_title": "Delete contact",
     "confirm_delete_body": "Contact {name} will be permanently deleted. Continue?",
+    "search_placeholder": "Search by name or email...",
+    "no_results": "No contacts match your filters",
+    "clear_filters": "Clear filters",
+    "filter": {
+      "status_all": "All statuses",
+      "lifecycle_all": "All lifecycle stages"
+    },
     "table": {
       "name": "Name",
       "email": "Email",
@@ -174,11 +182,99 @@
       "delete": "Delete"
     }
   },
+  "companies": {
+    "title": "Companies",
+    "add": "Add company",
+    "edit": "Edit company",
+    "view": "Company details",
+    "back_to_list": "Back to companies",
+    "delete": "Delete",
+    "owner": "Owner",
+    "submitting": "Saving...",
+    "created": "Company created successfully.",
+    "saved": "Company updated successfully.",
+    "deleted": "Company deleted successfully.",
+    "confirm_delete_title": "Delete company",
+    "confirm_delete_body": "Company {name} will be permanently deleted. Continue?",
+    "search_placeholder": "Search by name or domain...",
+    "no_results": "No companies match your filters",
+    "clear_filters": "Clear filters",
+    "filter_status": "All statuses",
+    "filter_type": "All types",
+    "filter_size": "All sizes",
+    "filter_industry": "Industry",
+    "table": {
+      "name": "Name",
+      "phone": "Phone",
+      "company_type": "Type",
+      "status": "Status",
+      "owner": "Owner"
+    },
+    "fields": {
+      "name": "Name",
+      "legal_name": "Legal name",
+      "website": "Website",
+      "email": "Email",
+      "phone": "Phone",
+      "industry": "Industry",
+      "size": "Company size",
+      "employee_count": "Employee count",
+      "company_type": "Company type",
+      "status": "Status",
+      "source": "Source",
+      "city": "City",
+      "state": "State/Province",
+      "country": "Country",
+      "linkedin_url": "LinkedIn URL",
+      "description": "Description",
+      "created_at": "Created at"
+    },
+    "type": {
+      "prospect": "Prospect",
+      "customer": "Customer",
+      "partner": "Partner",
+      "vendor": "Vendor",
+      "competitor": "Competitor",
+      "other": "Other"
+    },
+    "size": {
+      "none": "-",
+      "1-10": "1-10",
+      "11-50": "11-50",
+      "51-200": "51-200",
+      "201-500": "201-500",
+      "500+": "500+"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "validation": {
+      "name_required": "Name is required",
+      "phone_required": "Phone is required",
+      "phone_invalid": "Phone may only contain digits, spaces, +, -, ( )",
+      "country_required": "Country is required",
+      "max_length": "Maximum {max} characters",
+      "email_invalid": "Invalid email format",
+      "url_invalid": "Must be a valid URL (http/https)",
+      "employee_count_invalid": "Must be a non-negative whole number"
+    },
+    "actions": {
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete"
+    }
+  },
   "user_select": {
     "placeholder": "Select a teammate",
     "search_placeholder": "Search teammate...",
     "no_results": "No teammates found",
     "unassigned": "Unassigned"
+  },
+  "company_select": {
+    "placeholder": "Select a company",
+    "search_placeholder": "Search company...",
+    "no_results": "No companies found"
   },
   "location_select": {
     "country_label": "Country",
@@ -204,6 +300,9 @@
   },
   "error": {
     "CONTACT_NOT_FOUND": "Contact not found.",
+    "COMPANY_NOT_FOUND": "Company not found.",
+    "INVALID_OWNER_REFERENCE": "Please select a valid teammate as owner.",
+    "INVALID_COMPANY_REFERENCE": "Please select a valid company.",
     "AUTH_INVALID_CREDENTIALS": "Incorrect email or password.",
     "AUTH_TENANT_NOT_FOUND": "Workspace not found.",
     "AUTH_SLUG_TAKEN": "Workspace address already taken.",

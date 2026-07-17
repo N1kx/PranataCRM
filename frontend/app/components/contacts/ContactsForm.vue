@@ -18,6 +18,9 @@
       <AppField :label="t('contacts.owner')" name="owner_id">
         <AppUserSelect v-model="form.owner_id" :initial="ownerInitial" :disabled="isSaving" />
       </AppField>
+      <AppField :label="t('contacts.company')" name="company_id" :error="companyFieldError">
+        <AppCompanySelect v-model="form.company_id" :initial="companyInitial" :disabled="isSaving" />
+      </AppField>
       <AppField :label="t('contacts.fields.email')" name="email">
         <AppInput v-model="form.email" type="email" :disabled="isSaving" />
       </AppField>
@@ -73,6 +76,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { Contact, ContactStatus, ContactUpdatePayload, LifecycleStage } from '~/types/contacts'
+import type { CompanySummary } from '~/types/companies'
 import type { UserSummary } from '~/types/user'
 
 const props = defineProps<{
@@ -89,6 +93,7 @@ const { t } = useI18n()
 const { create, update } = useContacts()
 const { user: currentUser } = useAuth()
 const { lookup } = useUsers()
+const { lookup: lookupCompanies } = useCompanies()
 
 const CONTACT_STATUSES: ContactStatus[] = ['lead', 'qualified', 'customer', 'churned']
 const LIFECYCLE_STAGES: LifecycleStage[] = [
@@ -97,12 +102,17 @@ const LIFECYCLE_STAGES: LifecycleStage[] = [
 
 const isSaving = ref(false)
 const formError = ref('')
+const companyFieldError = ref('')
 // Resolved label for the currently selected owner, so AppUserSelect can render
 // a name immediately instead of a blank box while it searches.
 const ownerInitial = ref<UserSummary | null>(null)
+// Resolved label for the currently linked company, so AppCompanySelect can
+// render a name immediately instead of a blank box while it searches.
+const companyInitial = ref<CompanySummary | null>(null)
 
 const emptyForm = {
   owner_id: null as string | null,
+  company_id: null as string | null,
   first_name: '',
   last_name: '',
   email: '',
@@ -134,6 +144,7 @@ watch(() => props.contact, async (contact) => {
   }
   Object.assign(form, {
     owner_id: contact.owner_id ?? null,
+    company_id: contact.company_id ?? null,
     first_name: contact.first_name,
     last_name: contact.last_name ?? '',
     email: contact.email ?? '',
@@ -155,6 +166,12 @@ watch(() => props.contact, async (contact) => {
   if (contact.owner_id) {
     const [owner] = await lookup([contact.owner_id])
     ownerInitial.value = owner ?? null
+  }
+
+  companyInitial.value = null
+  if (contact.company_id) {
+    const [company] = await lookupCompanies([contact.company_id])
+    companyInitial.value = company ?? null
   }
 }, { immediate: true })
 
@@ -245,6 +262,7 @@ function buildPayload(): ContactUpdatePayload {
 
 async function onSubmit() {
   formError.value = ''
+  companyFieldError.value = ''
   isSaving.value = true
   try {
     if (props.contact) {
@@ -260,7 +278,12 @@ async function onSubmit() {
   }
   catch (err: unknown) {
     const e = err as { code?: string }
-    formError.value = t(`error.${e.code ?? 'unknown'}`, t('error.unknown'))
+    if (e.code === 'INVALID_COMPANY_REFERENCE') {
+      companyFieldError.value = t('error.INVALID_COMPANY_REFERENCE')
+    }
+    else {
+      formError.value = t(`error.${e.code ?? 'unknown'}`, t('error.unknown'))
+    }
   }
   finally {
     isSaving.value = false

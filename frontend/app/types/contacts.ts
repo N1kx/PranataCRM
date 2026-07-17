@@ -14,6 +14,7 @@ export type PreferredContactMethod = 'email' | 'phone' | 'sms' | 'whatsapp'
 export interface Contact {
   id: string
   owner_id?: string | null
+  company_id?: string | null
   first_name: string
   last_name?: string | null
   email?: string | null
@@ -36,6 +37,7 @@ export interface Contact {
 
 export interface ContactCreatePayload {
   owner_id?: string | null
+  company_id?: string | null
   first_name: string
   last_name?: string
   email?: string
@@ -62,4 +64,14 @@ export interface ContactListResponse {
   total: number
   page: number
   page_size: number
+}
+
+export interface ContactListParams {
+  page?: number
+  pageSize?: number
+  status?: ContactStatus
+  lifecycleStage?: LifecycleStage
+  q?: string
+  sort?: 'created_at' | 'first_name' | 'last_name' | 'email' | 'status'
+  order?: 'asc' | 'desc'
 }

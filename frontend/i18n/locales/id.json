@@ -116,12 +116,20 @@
     "back_to_list": "Kembali ke daftar kontak",
     "delete": "Hapus",
     "owner": "Pemilik",
+    "company": "Perusahaan",
     "submitting": "Menyimpan...",
     "created": "Kontak berhasil dibuat.",
     "saved": "Kontak berhasil diperbarui.",
     "deleted": "Kontak berhasil dihapus.",
     "confirm_delete_title": "Hapus kontak",
     "confirm_delete_body": "Kontak {name} akan dihapus permanen. Lanjutkan?",
+    "search_placeholder": "Cari berdasarkan nama atau email...",
+    "no_results": "Tidak ada kontak yang cocok dengan filter Anda",
+    "clear_filters": "Hapus filter",
+    "filter": {
+      "status_all": "Semua status",
+      "lifecycle_all": "Semua tahap lifecycle"
+    },
     "table": {
       "name": "Nama",
       "email": "Email",
@@ -174,11 +182,99 @@
       "delete": "Hapus"
     }
   },
+  "companies": {
+    "title": "Perusahaan",
+    "add": "Tambah perusahaan",
+    "edit": "Ubah perusahaan",
+    "view": "Detail perusahaan",
+    "back_to_list": "Kembali ke daftar perusahaan",
+    "delete": "Hapus",
+    "owner": "Pemilik",
+    "submitting": "Menyimpan...",
+    "created": "Perusahaan berhasil dibuat.",
+    "saved": "Perusahaan berhasil diperbarui.",
+    "deleted": "Perusahaan berhasil dihapus.",
+    "confirm_delete_title": "Hapus perusahaan",
+    "confirm_delete_body": "Perusahaan {name} akan dihapus permanen. Lanjutkan?",
+    "search_placeholder": "Cari berdasarkan nama atau domain...",
+    "no_results": "Tidak ada perusahaan yang cocok dengan filter Anda",
+    "clear_filters": "Hapus filter",
+    "filter_status": "Semua status",
+    "filter_type": "Semua tipe",
+    "filter_size": "Semua ukuran",
+    "filter_industry": "Industri",
+    "table": {
+      "name": "Nama",
+      "phone": "Telepon",
+      "company_type": "Tipe",
+      "status": "Status",
+      "owner": "Pemilik"
+    },
+    "fields": {
+      "name": "Nama",
+      "legal_name": "Nama legal",
+      "website": "Website",
+      "email": "Email",
+      "phone": "Telepon",
+      "industry": "Industri",
+      "size": "Ukuran perusahaan",
+      "employee_count": "Jumlah karyawan",
+      "company_type": "Tipe perusahaan",
+      "status": "Status",
+      "source": "Sumber",
+      "city": "Kota",
+      "state": "Provinsi",
+      "country": "Negara",
+      "linkedin_url": "URL LinkedIn",
+      "description": "Deskripsi",
+      "created_at": "Dibuat pada"
+    },
+    "type": {
+      "prospect": "Prospek",
+      "customer": "Pelanggan",
+      "partner": "Mitra",
+      "vendor": "Vendor",
+      "competitor": "Kompetitor",
+      "other": "Lainnya"
+    },
+    "size": {
+      "none": "-",
+      "1-10": "1-10",
+      "11-50": "11-50",
+      "51-200": "51-200",
+      "201-500": "201-500",
+      "500+": "500+"
+    },
+    "status": {
+      "active": "Aktif",
+      "inactive": "Tidak aktif"
+    },
+    "validation": {
+      "name_required": "Nama wajib diisi",
+      "phone_required": "Telepon wajib diisi",
+      "phone_invalid": "Telepon hanya boleh berisi angka, spasi, +, -, ( )",
+      "country_required": "Negara wajib diisi",
+      "max_length": "Maksimal {max} karakter",
+      "email_invalid": "Format email tidak valid",
+      "url_invalid": "Harus berupa URL yang valid (http/https)",
+      "employee_count_invalid": "Harus berupa angka bulat non-negatif"
+    },
+    "actions": {
+      "view": "Lihat",
+      "edit": "Ubah",
+      "delete": "Hapus"
+    }
+  },
   "user_select": {
     "placeholder": "Pilih anggota tim",
     "search_placeholder": "Cari anggota tim...",
     "no_results": "Anggota tim tidak ditemukan",
     "unassigned": "Belum ditugaskan"
+  },
+  "company_select": {
+    "placeholder": "Pilih perusahaan",
+    "search_placeholder": "Cari perusahaan...",
+    "no_results": "Perusahaan tidak ditemukan"
   },
   "location_select": {
     "country_label": "Negara",
@@ -204,6 +300,9 @@
   },
   "error": {
     "CONTACT_NOT_FOUND": "Kontak tidak ditemukan.",
+    "COMPANY_NOT_FOUND": "Perusahaan tidak ditemukan.",
+    "INVALID_OWNER_REFERENCE": "Pilih anggota tim yang valid sebagai pemilik.",
+    "INVALID_COMPANY_REFERENCE": "Pilih perusahaan yang valid.",
     "AUTH_INVALID_CREDENTIALS": "Email atau kata sandi salah.",
     "AUTH_TENANT_NOT_FOUND": "Workspace tidak ditemukan.",
     "AUTH_SLUG_TAKEN": "Alamat workspace sudah dipakai.",
