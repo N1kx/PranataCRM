@@ -156,8 +156,13 @@ watch(() => props.company, async (company) => {
     employee_count: company.employee_count != null ? String(company.employee_count) : '',
     company_type: company.company_type,
     status: company.status,
-    source: company.source ?? '',
-    source_other: company.source_other ?? '',
+    // A stored value outside the picklist (pre-#40 free text, or written by
+    // something other than this form) would otherwise make the USelect show
+    // blank and fail Zod's enum check on an untouched field — fold it into
+    // 'other' instead so the original text is preserved and stays editable.
+    ...(company.source && !(SOURCE_VALUES as readonly string[]).includes(company.source)
+      ? { source: 'other' as const, source_other: company.source_other || company.source }
+      : { source: company.source ?? '', source_other: company.source_other ?? '' }),
     city: company.city ?? '',
     state: company.state ?? '',
     country: company.country ?? '',
@@ -211,6 +216,14 @@ const schema = computed(() => z.object({
   country: z.string().min(1, t('companies.validation.country_required')),
   linkedin_url: optionalUrl,
   description: z.string(),
+}).superRefine((val, ctx) => {
+  if (val.source === 'other' && !val.source_other.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['source_other'],
+      message: t('companies.validation.source_other_required'),
+    })
+  }
 }))
 
 const statusOptions = computed(() =>

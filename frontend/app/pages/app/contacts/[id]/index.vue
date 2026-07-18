@@ -97,6 +97,7 @@
 
 <script setup lang="ts">
 import type { Contact } from '~/types/contacts'
+import { SOURCE_VALUES } from '~/types/source'
 
 definePageMeta({ layout: 'app', middleware: 'auth' })
 
@@ -185,9 +186,13 @@ async function loadContact() {
 onMounted(loadContact)
 
 // lead_source is a bounded picklist (issue #40) — show the translated label,
-// and append the free-text detail when the 'other' option was picked.
+// and append the free-text detail when the 'other' option was picked. A
+// stored value outside the picklist (pre-#40 free text, or written by
+// something other than this form) has no translation key — show it as-is
+// rather than leaking the raw i18n key path.
 function leadSourceDisplay(c: Contact): string {
   if (!c.lead_source) return ''
+  if (!(SOURCE_VALUES as readonly string[]).includes(c.lead_source)) return c.lead_source
   const label = t(`contacts.lead_source.${c.lead_source}`)
   return c.lead_source === 'other' && c.lead_source_other
     ? `${label} - ${c.lead_source_other}`

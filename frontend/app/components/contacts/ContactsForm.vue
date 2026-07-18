@@ -159,8 +159,13 @@ watch(() => props.contact, async (contact) => {
     department: contact.department ?? '',
     status: contact.status,
     lifecycle_stage: contact.lifecycle_stage ?? '',
-    lead_source: contact.lead_source ?? '',
-    lead_source_other: contact.lead_source_other ?? '',
+    // A stored value outside the picklist (pre-#40 free text, or written by
+    // something other than this form) would otherwise make the USelect show
+    // blank and fail Zod's enum check on an untouched field — fold it into
+    // 'other' instead so the original text is preserved and stays editable.
+    ...(contact.lead_source && !(SOURCE_VALUES as readonly string[]).includes(contact.lead_source)
+      ? { lead_source: 'other' as const, lead_source_other: contact.lead_source_other || contact.lead_source }
+      : { lead_source: contact.lead_source ?? '', lead_source_other: contact.lead_source_other ?? '' }),
     city: contact.city ?? '',
     state: contact.state ?? '',
     country: contact.country ?? '',
@@ -210,6 +215,14 @@ const schema = computed(() => z.object({
   state: z.string(),
   country: z.string(),
   description: z.string(),
+}).superRefine((val, ctx) => {
+  if (val.lead_source === 'other' && !val.lead_source_other.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['lead_source_other'],
+      message: t('contacts.validation.lead_source_other_required'),
+    })
+  }
 }))
 
 const statusOptions = computed(() =>

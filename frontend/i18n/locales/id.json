@@ -186,7 +186,8 @@
     "validation": {
       "first_name_required": "Nama depan wajib diisi",
       "max_length": "Maksimal {max} karakter",
-      "email_invalid": "Format email tidak valid"
+      "email_invalid": "Format email tidak valid",
+      "lead_source_other_required": "Mohon isi sumber lead"
     },
     "actions": {
       "view": "Lihat",
@@ -281,7 +282,8 @@
       "max_length": "Maksimal {max} karakter",
       "email_invalid": "Format email tidak valid",
       "url_invalid": "Harus berupa URL yang valid (http/https)",
-      "employee_count_invalid": "Harus berupa angka bulat non-negatif"
+      "employee_count_invalid": "Harus berupa angka bulat non-negatif",
+      "source_other_required": "Mohon isi sumber"
     },
     "actions": {
       "view": "Lihat",

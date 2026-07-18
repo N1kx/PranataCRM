@@ -186,7 +186,8 @@
     "validation": {
       "first_name_required": "First name is required",
       "max_length": "Maximum {max} characters",
-      "email_invalid": "Invalid email format"
+      "email_invalid": "Invalid email format",
+      "lead_source_other_required": "Please specify the lead source"
     },
     "actions": {
       "view": "View",
@@ -281,7 +282,8 @@
       "max_length": "Maximum {max} characters",
       "email_invalid": "Invalid email format",
       "url_invalid": "Must be a valid URL (http/https)",
-      "employee_count_invalid": "Must be a non-negative whole number"
+      "employee_count_invalid": "Must be a non-negative whole number",
+      "source_other_required": "Please specify the source"
     },
     "actions": {
       "view": "View",

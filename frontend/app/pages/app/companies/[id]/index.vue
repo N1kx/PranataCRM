@@ -83,6 +83,7 @@
 
 <script setup lang="ts">
 import type { Company } from '~/types/companies'
+import { SOURCE_VALUES } from '~/types/source'
 
 definePageMeta({ layout: 'app', middleware: 'auth' })
 
@@ -166,9 +167,13 @@ async function loadCompany() {
 onMounted(loadCompany)
 
 // source is a bounded picklist (issue #40) — show the translated label, and
-// append the free-text detail when the 'other' option was picked.
+// append the free-text detail when the 'other' option was picked. A stored
+// value outside the picklist (pre-#40 free text, or written by something
+// other than this form) has no translation key — show it as-is rather than
+// leaking the raw i18n key path (e.g. "companies.source.Trade Show 2025").
 function sourceDisplay(c: Company): string {
   if (!c.source) return ''
+  if (!(SOURCE_VALUES as readonly string[]).includes(c.source)) return c.source
   const label = t(`companies.source.${c.source}`)
   return c.source === 'other' && c.source_other
     ? `${label} - ${c.source_other}`
