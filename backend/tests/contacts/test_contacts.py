@@ -28,6 +28,7 @@ def _fake_contact(
         status="lead",
         lifecycle_stage=None,
         lead_source=None,
+        lead_source_other=None,
         linkedin_url=None,
         twitter_handle=None,
         address_line1=None,

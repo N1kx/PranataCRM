@@ -19,12 +19,16 @@ from app.modules.companies.use_case import CompanyUseCase
 from app.modules.contacts.repository import ContactRepository
 from app.modules.contacts.service import ContactService
 from app.modules.contacts.use_case import ContactUseCase
+from app.modules.deals.repository import DealRepository
+from app.modules.deals.service import DealService
+from app.modules.deals.use_case import DealUseCase
 from app.modules.geo.cache import GeoCache
 from app.modules.geo.repository import GeoRepository
 from app.modules.geo.service import GeoService
 from app.modules.geo.use_case import GeoUseCase
 from app.shared.contracts.auth_contract import AuthContractProtocol
 from app.shared.contracts.company_contract import CompanyContractProtocol
+from app.shared.contracts.contact_contract import ContactContractProtocol
 from app.shared.contracts.geo_contract import GeoContractProtocol
 from app.shared.redis import get_redis
 
@@ -57,3 +61,12 @@ async def get_contact_usecase(
     geo: Annotated[GeoContractProtocol, Depends(get_geo_usecase)],
 ) -> ContactUseCase:
     return ContactUseCase(ContactService(ContactRepository(session)), companies, auth, geo)
+
+
+async def get_deal_usecase(
+    session: Annotated[AsyncSession, Depends(get_session)],
+    auth: Annotated[AuthContractProtocol, Depends(get_auth_usecase)],
+    companies: Annotated[CompanyContractProtocol, Depends(get_company_usecase)],
+    contacts: Annotated[ContactContractProtocol, Depends(get_contact_usecase)],
+) -> DealUseCase:
+    return DealUseCase(DealService(DealRepository(session)), auth, companies, contacts)
