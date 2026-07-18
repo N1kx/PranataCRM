@@ -43,7 +43,10 @@
         <USelect v-model="form.status" :items="statusOptions" :disabled="isSaving" class="w-full" />
       </AppField>
       <AppField :label="t('companies.fields.source')" name="source">
-        <AppInput v-model="form.source" :disabled="isSaving" />
+        <USelect v-model="sourceModel" :items="sourceOptions" :disabled="isSaving" class="w-full" />
+      </AppField>
+      <AppField v-if="form.source === 'other'" :label="t('companies.fields.source_other')" name="source_other">
+        <AppInput v-model="form.source_other" :disabled="isSaving" />
       </AppField>
       <!-- Renders as 3 separate fields (Country / State / City), each with
            its own label; State disabled until Country is picked, City
@@ -79,6 +82,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { Company, CompanySize, CompanyStatus, CompanyType, CompanyUpdatePayload } from '~/types/companies'
+import { SOURCE_VALUES, type SourceValue } from '~/types/source'
 import type { UserSummary } from '~/types/user'
 
 const props = defineProps<{
@@ -118,7 +122,8 @@ const emptyForm = {
   employee_count: '',
   company_type: 'prospect' as CompanyType,
   status: 'active' as CompanyStatus,
-  source: '',
+  source: '' as SourceValue | '',
+  source_other: '',
   city: '',
   state: '',
   country: '',
@@ -151,7 +156,13 @@ watch(() => props.company, async (company) => {
     employee_count: company.employee_count != null ? String(company.employee_count) : '',
     company_type: company.company_type,
     status: company.status,
-    source: company.source ?? '',
+    // A stored value outside the picklist (pre-#40 free text, or written by
+    // something other than this form) would otherwise make the USelect show
+    // blank and fail Zod's enum check on an untouched field — fold it into
+    // 'other' instead so the original text is preserved and stays editable.
+    ...(company.source && !(SOURCE_VALUES as readonly string[]).includes(company.source)
+      ? { source: 'other' as const, source_other: company.source_other || company.source }
+      : { source: company.source ?? '', source_other: company.source_other ?? '' }),
     city: company.city ?? '',
     state: company.state ?? '',
     country: company.country ?? '',
@@ -194,7 +205,8 @@ const schema = computed(() => z.object({
   ),
   company_type: z.enum(COMPANY_TYPES as [CompanyType, ...CompanyType[]]),
   status: z.enum(COMPANY_STATUSES as [CompanyStatus, ...CompanyStatus[]]),
-  source: z.string().max(50, maxMsg(50)),
+  source: z.literal('').or(z.enum(SOURCE_VALUES)),
+  source_other: z.string().max(100, maxMsg(100)),
   // country/state/city come from AppLocationSelect (issue #26), not free
   // text — always '' or a valid code/id picked from the backend's list, so
   // no length/format check is needed here (the backend still validates
@@ -204,6 +216,14 @@ const schema = computed(() => z.object({
   country: z.string().min(1, t('companies.validation.country_required')),
   linkedin_url: optionalUrl,
   description: z.string(),
+}).superRefine((val, ctx) => {
+  if (val.source === 'other' && !val.source_other.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['source_other'],
+      message: t('companies.validation.source_other_required'),
+    })
+  }
 }))
 
 const statusOptions = computed(() =>
@@ -226,6 +246,20 @@ const sizeModel = computed({
   get: () => form.size || NONE_SENTINEL,
   set: (v: string) => {
     form.size = (v === NONE_SENTINEL ? '' : v) as CompanySize | ''
+  },
+})
+
+const sourceOptions = computed(() => [
+  { value: NONE_SENTINEL, label: t('companies.source.none') },
+  ...SOURCE_VALUES.map(value => ({ value, label: t(`companies.source.${value}`) })),
+])
+const sourceModel = computed({
+  get: () => form.source || NONE_SENTINEL,
+  set: (v: string) => {
+    form.source = (v === NONE_SENTINEL ? '' : v) as SourceValue | ''
+    // Clearing the picklist away from 'other' drops the now-irrelevant detail
+    // immediately, so a stale source_other never lingers hidden in the form.
+    if (form.source !== 'other') form.source_other = ''
   },
 })
 

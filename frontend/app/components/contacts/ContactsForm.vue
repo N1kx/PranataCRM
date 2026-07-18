@@ -37,7 +37,10 @@
         <AppInput v-model="form.department" :disabled="isSaving" />
       </AppField>
       <AppField :label="t('contacts.fields.lead_source')" name="lead_source">
-        <AppInput v-model="form.lead_source" :disabled="isSaving" />
+        <USelect v-model="leadSourceModel" :items="leadSourceOptions" :disabled="isSaving" class="w-full" />
+      </AppField>
+      <AppField v-if="form.lead_source === 'other'" :label="t('contacts.fields.lead_source_other')" name="lead_source_other">
+        <AppInput v-model="form.lead_source_other" :disabled="isSaving" />
       </AppField>
       <AppField :label="t('contacts.fields.status')" name="status">
         <USelect v-model="form.status" :items="statusOptions" :disabled="isSaving" class="w-full" />
@@ -77,6 +80,7 @@
 import { z } from 'zod'
 import type { Contact, ContactStatus, ContactUpdatePayload, LifecycleStage } from '~/types/contacts'
 import type { CompanySummary } from '~/types/companies'
+import { SOURCE_VALUES, type SourceValue } from '~/types/source'
 import type { UserSummary } from '~/types/user'
 
 const props = defineProps<{
@@ -122,7 +126,8 @@ const emptyForm = {
   department: '',
   status: 'lead' as ContactStatus,
   lifecycle_stage: '' as LifecycleStage | '',
-  lead_source: '',
+  lead_source: '' as SourceValue | '',
+  lead_source_other: '',
   city: '',
   state: '',
   country: '',
@@ -154,7 +159,13 @@ watch(() => props.contact, async (contact) => {
     department: contact.department ?? '',
     status: contact.status,
     lifecycle_stage: contact.lifecycle_stage ?? '',
-    lead_source: contact.lead_source ?? '',
+    // A stored value outside the picklist (pre-#40 free text, or written by
+    // something other than this form) would otherwise make the USelect show
+    // blank and fail Zod's enum check on an untouched field — fold it into
+    // 'other' instead so the original text is preserved and stays editable.
+    ...(contact.lead_source && !(SOURCE_VALUES as readonly string[]).includes(contact.lead_source)
+      ? { lead_source: 'other' as const, lead_source_other: contact.lead_source_other || contact.lead_source }
+      : { lead_source: contact.lead_source ?? '', lead_source_other: contact.lead_source_other ?? '' }),
     city: contact.city ?? '',
     state: contact.state ?? '',
     country: contact.country ?? '',
@@ -194,7 +205,8 @@ const schema = computed(() => z.object({
   lifecycle_stage: z.literal('').or(
     z.enum(LIFECYCLE_STAGES as [LifecycleStage, ...LifecycleStage[]]),
   ),
-  lead_source: z.string().max(50, maxMsg(50)),
+  lead_source: z.literal('').or(z.enum(SOURCE_VALUES)),
+  lead_source_other: z.string().max(100, maxMsg(100)),
   // country/state/city come from AppLocationSelect (issue #26), not free
   // text — always '' or a valid code/id picked from the backend's list, so
   // no length/format check is needed here (the backend still validates
@@ -203,6 +215,14 @@ const schema = computed(() => z.object({
   state: z.string(),
   country: z.string(),
   description: z.string(),
+}).superRefine((val, ctx) => {
+  if (val.lead_source === 'other' && !val.lead_source_other.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['lead_source_other'],
+      message: t('contacts.validation.lead_source_other_required'),
+    })
+  }
 }))
 
 const statusOptions = computed(() =>
@@ -222,6 +242,20 @@ const lifecycleStageModel = computed({
   get: () => form.lifecycle_stage || NONE_SENTINEL,
   set: (v: string) => {
     form.lifecycle_stage = (v === NONE_SENTINEL ? '' : v) as LifecycleStage | ''
+  },
+})
+
+const leadSourceOptions = computed(() => [
+  { value: NONE_SENTINEL, label: t('contacts.lead_source.none') },
+  ...SOURCE_VALUES.map(value => ({ value, label: t(`contacts.lead_source.${value}`) })),
+])
+const leadSourceModel = computed({
+  get: () => form.lead_source || NONE_SENTINEL,
+  set: (v: string) => {
+    form.lead_source = (v === NONE_SENTINEL ? '' : v) as SourceValue | ''
+    // Clearing the picklist away from 'other' drops the now-irrelevant detail
+    // immediately, so a stale lead_source_other never lingers hidden in the form.
+    if (form.lead_source !== 'other') form.lead_source_other = ''
   },
 })
 

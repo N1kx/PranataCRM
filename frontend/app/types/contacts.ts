@@ -1,3 +1,5 @@
+import type { SourceValue } from '~/types/source'
+
 export type ContactStatus = 'lead' | 'qualified' | 'customer' | 'churned'
 
 export type LifecycleStage =
@@ -24,7 +26,9 @@ export interface Contact {
   department?: string | null
   status: ContactStatus
   lifecycle_stage?: LifecycleStage | null
-  lead_source?: string | null
+  lead_source?: SourceValue | null
+  /** Free-text detail, only meaningful when lead_source === 'other' (issue #40). */
+  lead_source_other?: string | null
   /** geo_cities.id (issue #26) — resolve the display name via useGeo(), not stored as text. */
   city?: string | null
   /** geo_states.id (issue #26) — resolve the display name via useGeo(), not stored as text. */
@@ -47,7 +51,8 @@ export interface ContactCreatePayload {
   department?: string
   status?: ContactStatus
   lifecycle_stage?: LifecycleStage
-  lead_source?: string
+  lead_source?: SourceValue
+  lead_source_other?: string
   // Nullable (not just optional): AppLocationSelect's cascade reset needs to
   // explicitly clear a previously-set state/city when the parent changes —
   // see ContactsForm.vue's buildPayload.

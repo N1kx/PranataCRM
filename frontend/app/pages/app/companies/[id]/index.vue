@@ -83,6 +83,7 @@
 
 <script setup lang="ts">
 import type { Company } from '~/types/companies'
+import { SOURCE_VALUES } from '~/types/source'
 
 definePageMeta({ layout: 'app', middleware: 'auth' })
 
@@ -165,6 +166,20 @@ async function loadCompany() {
 
 onMounted(loadCompany)
 
+// source is a bounded picklist (issue #40) — show the translated label, and
+// append the free-text detail when the 'other' option was picked. A stored
+// value outside the picklist (pre-#40 free text, or written by something
+// other than this form) has no translation key — show it as-is rather than
+// leaking the raw i18n key path (e.g. "companies.source.Trade Show 2025").
+function sourceDisplay(c: Company): string {
+  if (!c.source) return ''
+  if (!(SOURCE_VALUES as readonly string[]).includes(c.source)) return c.source
+  const label = t(`companies.source.${c.source}`)
+  return c.source === 'other' && c.source_other
+    ? `${label} - ${c.source_other}`
+    : label
+}
+
 const detailFields = computed(() => {
   const c = company.value
   if (!c) return []
@@ -177,7 +192,7 @@ const detailFields = computed(() => {
     { label: t('companies.fields.industry'), value: c.industry },
     { label: t('companies.fields.size'), value: c.size },
     { label: t('companies.fields.employee_count'), value: c.employee_count != null ? String(c.employee_count) : '' },
-    { label: t('companies.fields.source'), value: c.source },
+    { label: t('companies.fields.source'), value: sourceDisplay(c) },
     { label: t('companies.fields.country'), value: countryName.value },
     { label: t('companies.fields.state'), value: stateName.value },
     { label: t('companies.fields.city'), value: cityName.value },

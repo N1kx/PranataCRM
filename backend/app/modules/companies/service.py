@@ -135,6 +135,7 @@ class CompanyService:
             arr=company.arr,
             annual_revenue=company.annual_revenue,
             source=company.source,
+            source_other=company.source_other,
             address_line1=company.address_line1,
             address_line2=company.address_line2,
             city=company.city,

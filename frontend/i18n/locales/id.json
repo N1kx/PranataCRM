@@ -149,6 +149,7 @@
       "status": "Status",
       "lifecycle_stage": "Tahap lifecycle",
       "lead_source": "Sumber lead",
+      "lead_source_other": "Sumber lead (lainnya)",
       "city": "Kota",
       "state": "Provinsi",
       "country": "Negara",
@@ -160,6 +161,17 @@
       "qualified": "Terkualifikasi",
       "customer": "Pelanggan",
       "churned": "Churned"
+    },
+    "lead_source": {
+      "none": "-",
+      "web": "Website",
+      "referral": "Referral",
+      "event": "Event",
+      "cold_call": "Telepon dingin",
+      "ad": "Iklan",
+      "social": "Media sosial",
+      "partner": "Mitra",
+      "other": "Lainnya"
     },
     "lifecycle": {
       "none": "-",
@@ -174,7 +186,8 @@
     "validation": {
       "first_name_required": "Nama depan wajib diisi",
       "max_length": "Maksimal {max} karakter",
-      "email_invalid": "Format email tidak valid"
+      "email_invalid": "Format email tidak valid",
+      "lead_source_other_required": "Mohon isi sumber lead"
     },
     "actions": {
       "view": "Lihat",
@@ -222,6 +235,7 @@
       "company_type": "Tipe perusahaan",
       "status": "Status",
       "source": "Sumber",
+      "source_other": "Sumber (lainnya)",
       "city": "Kota",
       "state": "Provinsi",
       "country": "Negara",
@@ -249,6 +263,17 @@
       "active": "Aktif",
       "inactive": "Tidak aktif"
     },
+    "source": {
+      "none": "-",
+      "web": "Website",
+      "referral": "Referral",
+      "event": "Event",
+      "cold_call": "Telepon dingin",
+      "ad": "Iklan",
+      "social": "Media sosial",
+      "partner": "Mitra",
+      "other": "Lainnya"
+    },
     "validation": {
       "name_required": "Nama wajib diisi",
       "phone_required": "Telepon wajib diisi",
@@ -257,7 +282,8 @@
       "max_length": "Maksimal {max} karakter",
       "email_invalid": "Format email tidak valid",
       "url_invalid": "Harus berupa URL yang valid (http/https)",
-      "employee_count_invalid": "Harus berupa angka bulat non-negatif"
+      "employee_count_invalid": "Harus berupa angka bulat non-negatif",
+      "source_other_required": "Mohon isi sumber"
     },
     "actions": {
       "view": "Lihat",

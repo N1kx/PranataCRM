@@ -31,6 +31,10 @@ class Company(Base, UUIDMixin, TimestampMixin, AuditMixin):
     arr: Mapped[float | None] = mapped_column(nullable=True)
     annual_revenue: Mapped[float | None] = mapped_column(nullable=True)
     source: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # Free-text detail, only meaningful when source == 'other' (issue #40) — the
+    # picklist itself stays a bounded set so reporting can group cleanly, while
+    # this preserves the specific channel a picklist value would otherwise lose.
+    source_other: Mapped[str | None] = mapped_column(String(100), nullable=True)
     address_line1: Mapped[str | None] = mapped_column(String(255), nullable=True)
     address_line2: Mapped[str | None] = mapped_column(String(255), nullable=True)
     city: Mapped[str | None] = mapped_column(String(100), nullable=True)

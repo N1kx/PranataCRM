@@ -34,6 +34,10 @@ class Contact(Base, UUIDMixin, TimestampMixin, AuditMixin):
     status: Mapped[str] = mapped_column(String(20), nullable=False, default=ContactStatus.LEAD)
     lifecycle_stage: Mapped[str | None] = mapped_column(String(30), nullable=True)
     lead_source: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # Free-text detail, only meaningful when lead_source == 'other' (issue #40)
+    # — the picklist itself stays a bounded set so reporting can group cleanly,
+    # while this preserves the specific channel a picklist value would lose.
+    lead_source_other: Mapped[str | None] = mapped_column(String(100), nullable=True)
     linkedin_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     twitter_handle: Mapped[str | None] = mapped_column(String(100), nullable=True)
     address_line1: Mapped[str | None] = mapped_column(String(255), nullable=True)
