@@ -40,6 +40,9 @@ class ContactService:
             raise ContactNotFound()
         return self._to_response(contact)
 
+    async def contact_exists(self, tenant_id: uuid.UUID, contact_id: uuid.UUID) -> bool:
+        return await self._repo.get_by_id(tenant_id, contact_id) is not None
+
     async def list_contacts(
         self,
         tenant_id: uuid.UUID,

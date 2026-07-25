@@ -30,6 +30,7 @@ def _fake_company(
         arr=None,
         annual_revenue=None,
         source=None,
+        source_other=None,
         address_line1=None,
         address_line2=None,
         city=None,

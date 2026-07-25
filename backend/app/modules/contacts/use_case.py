@@ -14,11 +14,10 @@ from app.shared.contracts.geo_contract import GeoContractProtocol
 
 
 class ContactUseCase:
-    """Entry point for the contacts module — its router calls in through here,
-    never through ContactService directly. No other module currently consumes
-    contacts data, so there is no ContactContractProtocol yet (see
-    shared/contracts/contact_contract.py); this will implement it once one is
-    needed. Depends on CompanyContractProtocol (not the concrete companies
+    """Implements ContactContractProtocol. Entry point for the contacts
+    module — both its own router and other modules (e.g. deals, for
+    contact_id validation) call in through here, never through ContactService
+    directly. Depends on CompanyContractProtocol (not the concrete companies
     module) to validate a company_id reference, on AuthContractProtocol to
     validate an owner_id reference, and on GeoContractProtocol to validate
     the country/state/city location (issue #26)."""
@@ -84,6 +83,9 @@ class ContactUseCase:
         self, tenant_id: uuid.UUID, contact_id: uuid.UUID
     ) -> ContactResponse:
         return await self._service.get_contact(tenant_id, contact_id)
+
+    async def contact_exists(self, tenant_id: uuid.UUID, contact_id: uuid.UUID) -> bool:
+        return await self._service.contact_exists(tenant_id, contact_id)
 
     async def list_contacts(
         self,
