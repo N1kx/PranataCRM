@@ -182,6 +182,9 @@ class DealService:
             data["status"] = DealStatus.WON.value
             data["actual_close_date"] = deal.actual_close_date or today
             data["probability"] = 100
+            # close_reason only carries meaning for a closed (won/lost) deal.
+            if payload.close_reason is not None:
+                data["close_reason"] = payload.close_reason
         elif payload.stage == DealStage.LOST.value:
             if not payload.lost_reason:
                 raise InvalidStageTransition(
@@ -191,12 +194,17 @@ class DealService:
             data["actual_close_date"] = deal.actual_close_date or today
             data["probability"] = 0
             data["lost_reason"] = payload.lost_reason
+            if payload.close_reason is not None:
+                data["close_reason"] = payload.close_reason
         elif payload.stage in _OPEN_STAGES:
+            # Reopening a closed deal: clear every trace of the previous close
+            # so the record doesn't carry a stale outcome — the close date and
+            # the close_reason/lost_reason that explained it. A close_reason
+            # sent alongside a reopen is ignored (it only applies to won/lost).
             data["status"] = DealStatus.OPEN.value
             data["actual_close_date"] = None
-
-        if payload.close_reason is not None:
-            data["close_reason"] = payload.close_reason
+            data["close_reason"] = None
+            data["lost_reason"] = None
 
         new_probability = data.get("probability", deal.probability)
         data["weighted_value"] = _compute_weighted_value(deal.value, new_probability)

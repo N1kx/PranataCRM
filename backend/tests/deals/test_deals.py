@@ -121,6 +121,36 @@ class DealsTests(DealsTestCase):
             self._clear_override(app)
         self.assertEqual(resp.status_code, 422)
 
+    async def test_create_deal_null_value_returns_422(self):
+        # An explicit null for a NOT NULL numeric column must 422, not 500
+        # (would crash the weighted_value computation / NOT NULL insert).
+        app = self._override_current_user()
+        try:
+            resp = await self.client.post(
+                "/api/v1/deals",
+                json={
+                    "title": "Big Sale", "expected_close_date": "2026-12-31",
+                    "value": None,
+                },
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
+
+    async def test_create_deal_null_probability_returns_422(self):
+        app = self._override_current_user()
+        try:
+            resp = await self.client.post(
+                "/api/v1/deals",
+                json={
+                    "title": "Big Sale", "expected_close_date": "2026-12-31",
+                    "probability": None,
+                },
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
+
     async def test_create_deal_invalid_stage_returns_422(self):
         app = self._override_current_user()
         try:
@@ -304,6 +334,19 @@ class DealsTests(DealsTestCase):
         self.assertEqual(resp.status_code, 422)
 
     @patch("app.modules.deals.repository.DealRepository.get_by_id", new_callable=AsyncMock)
+    async def test_update_deal_null_currency_returns_422(self, mock_get):
+        # currency "cannot be cleared" (issue #36) — explicit null -> 422.
+        mock_get.return_value = _fake_deal(self._deal_id, self._tenant_id)
+        app = self._override_current_user()
+        try:
+            resp = await self.client.patch(
+                f"/api/v1/deals/{self._deal_id}", json={"currency": None}
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
+
+    @patch("app.modules.deals.repository.DealRepository.get_by_id", new_callable=AsyncMock)
     async def test_update_deal_not_found_returns_404(self, mock_get):
         mock_get.return_value = None
         app = self._override_current_user()
@@ -382,6 +425,26 @@ class DealsTests(DealsTestCase):
         self.assertIsNone(call_data["contact_id"])
 
     # ── abandon / reopen (generic PATCH status) ─────────────────────────────────
+
+    @patch("app.modules.deals.repository.DealRepository.get_by_id", new_callable=AsyncMock)
+    async def test_update_deal_garbage_status_is_field_validation_not_stage_transition(
+        self, mock_get
+    ):
+        # A status value that isn't a valid enum is a plain field-validation
+        # error, not INVALID_STAGE_TRANSITION (which is reserved for valid but
+        # disallowed transitions like -> won).
+        mock_get.return_value = _fake_deal(self._deal_id, self._tenant_id)
+        app = self._override_current_user()
+        try:
+            resp = await self.client.patch(
+                f"/api/v1/deals/{self._deal_id}", json={"status": "garbage"}
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
+        body = resp.json()
+        code = body.get("error", {}).get("code") if "error" in body else None
+        self.assertNotEqual(code, "INVALID_STAGE_TRANSITION")
 
     @patch("app.modules.deals.repository.DealRepository.update", new_callable=AsyncMock)
     @patch("app.modules.deals.repository.DealRepository.get_by_id", new_callable=AsyncMock)

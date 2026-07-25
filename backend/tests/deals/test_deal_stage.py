@@ -103,6 +103,7 @@ class DealStageTests(DealsTestCase):
         mock_get.return_value = _fake_deal(
             self._deal_id, self._tenant_id,
             stage="lost", status="lost", actual_close_date=dt.date(2026, 1, 1),
+            close_reason="Budget cut", lost_reason="Went with a competitor",
         )
         mock_update.return_value = _fake_deal(
             self._deal_id, self._tenant_id, stage="qualified", status="open",
@@ -119,6 +120,34 @@ class DealStageTests(DealsTestCase):
         call_data = mock_update.call_args.args[1]
         self.assertEqual(call_data["status"], "open")
         self.assertIsNone(call_data["actual_close_date"])
+        # Reopening clears the stale won/lost bookkeeping.
+        self.assertIsNone(call_data["close_reason"])
+        self.assertIsNone(call_data["lost_reason"])
+
+    @patch("app.modules.deals.repository.DealRepository.update", new_callable=AsyncMock)
+    @patch("app.modules.deals.repository.DealRepository.get_by_id", new_callable=AsyncMock)
+    async def test_reopen_ignores_close_reason_in_body(self, mock_get, mock_update):
+        # close_reason only applies to won/lost — a value sent alongside a
+        # reopen must not be written (and the stored one is cleared).
+        mock_get.return_value = _fake_deal(
+            self._deal_id, self._tenant_id,
+            stage="lost", status="lost", close_reason="old",
+        )
+        mock_update.return_value = _fake_deal(
+            self._deal_id, self._tenant_id, stage="qualified", status="open",
+        )
+        app = self._override_current_user()
+        try:
+            resp = await self.client.patch(
+                f"/api/v1/deals/{self._deal_id}/stage",
+                json={"stage": "qualified", "close_reason": "should be ignored"},
+            )
+        finally:
+            self._clear_override(app)
+
+        self.assertEqual(resp.status_code, 200)
+        call_data = mock_update.call_args.args[1]
+        self.assertIsNone(call_data["close_reason"])
 
     @patch("app.modules.deals.repository.DealRepository.update", new_callable=AsyncMock)
     @patch("app.modules.deals.repository.DealRepository.get_by_id", new_callable=AsyncMock)

@@ -4,11 +4,12 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.shared.types import DealStage, DealType, Priority
+from app.shared.types import DealStage, DealStatus, DealType, Priority
 
 _ALLOWED_DEAL_TYPE = {t.value for t in DealType}
 _ALLOWED_PRIORITY = {p.value for p in Priority}
 _ALLOWED_STAGE = {s.value for s in DealStage}
+_ALLOWED_STATUS = {s.value for s in DealStatus}
 
 # Allowlist for GET /deals query params — never interpolate raw client
 # input into the query. Keys are the client-facing values; values are the
@@ -70,9 +71,21 @@ class _DealFieldsMixin(BaseModel):
     def _trim_strings(cls, v: str | None) -> str | None:
         return _trim(v)
 
+    @field_validator("value", "probability", mode="before")
+    @classmethod
+    def _reject_null_numeric(cls, v, info):
+        # value/probability map to NOT NULL columns with server defaults —
+        # omitting them is fine (this validator doesn't run for unset fields),
+        # but an explicit null must 422 rather than crash the weighted_value
+        # computation (None * Decimal) or the NOT NULL insert.
+        return _reject_null(info.field_name, v)
+
     @field_validator("currency", mode="before")
     @classmethod
     def _normalize_currency(cls, v: str | None) -> str | None:
+        # currency is NOT NULL and "cannot be cleared" (issue #36) — reject an
+        # explicit null before trimming/normalizing.
+        _reject_null("currency", v)
         v = _trim(v)
         if v is None:
             return None
@@ -199,8 +212,16 @@ class DealUpdate(_DealFieldsMixin):
 
     @field_validator("status", mode="before")
     @classmethod
-    def _reject_null_status(cls, v):
-        return _reject_null("status", _trim(v) if isinstance(v, str) else v)
+    def _validate_status(cls, v):
+        # A garbage status is a plain field-validation error (like deal_type/
+        # priority), NOT an INVALID_STAGE_TRANSITION. The open<->abandoned
+        # transition rules for valid values are enforced in the service.
+        v = _reject_null("status", _trim(v) if isinstance(v, str) else v)
+        if v not in _ALLOWED_STATUS:
+            raise ValueError(
+                f"status must be one of: {', '.join(sorted(_ALLOWED_STATUS))}."
+            )
+        return v
 
 
 class DealStageUpdate(BaseModel):
