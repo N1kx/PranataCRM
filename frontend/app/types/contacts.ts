@@ -76,7 +76,20 @@ export interface ContactListParams {
   pageSize?: number
   status?: ContactStatus
   lifecycleStage?: LifecycleStage
+  ownerId?: string
+  companyId?: string
   q?: string
   sort?: 'created_at' | 'first_name' | 'last_name' | 'email' | 'status'
   order?: 'asc' | 'desc'
+}
+
+/**
+ * Lightweight shape returned by /contacts/search + /contacts/lookup.
+ * `name` arrives already joined from first/last name.
+ */
+export interface ContactSummary {
+  id: string
+  name: string
+  email?: string | null
+  company_id?: string | null
 }

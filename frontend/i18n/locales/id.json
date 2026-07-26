@@ -291,6 +291,120 @@
       "delete": "Hapus"
     }
   },
+  "deals": {
+    "title": "Deal",
+    "add": "Tambah deal",
+    "edit": "Ubah deal",
+    "view": "Detail deal",
+    "back_to_list": "Kembali ke daftar deal",
+    "delete": "Hapus",
+    "list_view": "Tampilan tabel",
+    "submitting": "Menyimpan...",
+    "created": "Deal berhasil dibuat.",
+    "saved": "Deal berhasil diperbarui.",
+    "deleted": "Deal berhasil dihapus.",
+    "abandoned": "Deal ditandai dibatalkan.",
+    "reopened": "Deal dibuka kembali.",
+    "stage_changed": "Tahap deal berhasil diubah.",
+    "confirm_delete_title": "Hapus deal",
+    "confirm_delete_body": "Deal {title} akan dihapus permanen. Lanjutkan?",
+    "search_placeholder": "Cari berdasarkan judul...",
+    "no_results": "Tidak ada deal yang cocok dengan filter Anda",
+    "clear_filters": "Hapus filter",
+    "filter_stage": "Semua tahap",
+    "filter_status": "Semua status",
+    "filter_type": "Semua tipe",
+    "filter_priority": "Semua prioritas",
+    "filter_owner": "Semua pemilik",
+    "filter_company": "Semua perusahaan",
+    "table": {
+      "title": "Judul",
+      "stage": "Tahap",
+      "status": "Status",
+      "value": "Nilai",
+      "probability": "Probabilitas",
+      "expected_close_date": "Perkiraan tutup",
+      "owner": "Pemilik",
+      "company": "Perusahaan"
+    },
+    "fields": {
+      "title": "Judul",
+      "description": "Deskripsi",
+      "company_id": "Perusahaan",
+      "contact_id": "Kontak",
+      "owner_id": "Pemilik",
+      "deal_type": "Tipe deal",
+      "value": "Nilai",
+      "currency": "Mata uang",
+      "probability": "Probabilitas (%)",
+      "weighted_value": "Nilai tertimbang",
+      "expected_close_date": "Perkiraan tanggal tutup",
+      "actual_close_date": "Tanggal tutup aktual",
+      "priority": "Prioritas",
+      "source": "Sumber",
+      "next_step": "Langkah berikutnya",
+      "next_step_date": "Tanggal langkah berikutnya",
+      "competitor": "Kompetitor",
+      "close_reason": "Alasan penutupan",
+      "lost_reason": "Alasan kalah",
+      "created_at": "Dibuat pada"
+    },
+    "stage": {
+      "lead": "Lead",
+      "qualified": "Terkualifikasi",
+      "proposal": "Proposal",
+      "won": "Menang",
+      "lost": "Kalah"
+    },
+    "status": {
+      "open": "Terbuka",
+      "won": "Menang",
+      "lost": "Kalah",
+      "abandoned": "Dibatalkan"
+    },
+    "type": {
+      "none": "-",
+      "new_business": "Bisnis baru",
+      "renewal": "Perpanjangan",
+      "upsell": "Upsell",
+      "expansion": "Ekspansi",
+      "cross_sell": "Cross-sell"
+    },
+    "priority": {
+      "none": "-",
+      "low": "Rendah",
+      "medium": "Sedang",
+      "high": "Tinggi"
+    },
+    "pipeline": {
+      "title": "Pipeline",
+      "empty_column": "Belum ada deal",
+      "more_in_list": "{count} lainnya - lihat di tabel",
+      "move_to": "Pindahkan deal ke tahap {stage}.",
+      "won_title": "Tandai deal sebagai menang",
+      "lost_title": "Tandai deal sebagai kalah",
+      "lost_reason_placeholder": "Mengapa deal ini kalah?",
+      "confirm_move": "Pindahkan"
+    },
+    "validation": {
+      "title_required": "Judul wajib diisi",
+      "expected_close_date_required": "Perkiraan tanggal tutup wajib diisi",
+      "date_invalid": "Format tanggal tidak valid",
+      "value_invalid": "Nilai harus berupa angka non-negatif (maks 2 desimal)",
+      "currency_invalid": "Mata uang harus 3 huruf, contoh IDR atau USD",
+      "probability_invalid": "Probabilitas harus antara 0 dan 100",
+      "lost_reason_required": "Alasan kalah wajib diisi",
+      "max_length": "Maksimal {max} karakter"
+    },
+    "actions": {
+      "view": "Lihat",
+      "edit": "Ubah",
+      "delete": "Hapus",
+      "change_stage": "Ubah tahap",
+      "abandon": "Batalkan",
+      "reopen": "Buka kembali"
+    }
+  },
   "user_select": {
     "placeholder": "Pilih anggota tim",
     "search_placeholder": "Cari anggota tim...",
@@ -301,6 +415,11 @@
     "placeholder": "Pilih perusahaan",
     "search_placeholder": "Cari perusahaan...",
     "no_results": "Perusahaan tidak ditemukan"
+  },
+  "contact_select": {
+    "placeholder": "Pilih kontak",
+    "search_placeholder": "Cari kontak...",
+    "no_results": "Kontak tidak ditemukan"
   },
   "location_select": {
     "country_label": "Negara",
@@ -341,7 +460,11 @@
     "INVALID_STATE_REFERENCE": "Pilih provinsi yang valid untuk negara yang dipilih.",
     "INVALID_CITY_REFERENCE": "Pilih kota yang valid untuk provinsi yang dipilih.",
     "INTERNAL_ERROR": "Terjadi kesalahan. Silakan coba lagi.",
-    "unknown": "Terjadi kesalahan tak terduga."
+    "unknown": "Terjadi kesalahan tak terduga.",
+    "DEAL_NOT_FOUND": "Deal tidak ditemukan.",
+    "INVALID_CONTACT_REFERENCE": "Kontak yang dipilih tidak ditemukan.",
+    "INVALID_STAGE_TRANSITION": "Perubahan tahap/status ini tidak diizinkan.",
+    "VALIDATION_ERROR": "Data yang dikirim tidak valid."
   },
   "common": {
     "loading": "Memuat...",

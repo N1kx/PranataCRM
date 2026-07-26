@@ -90,6 +90,45 @@ class ContactRepository:
         )
         return list(items_result.scalars().all()), total_result.scalar_one()
 
+    async def search(
+        self,
+        tenant_id: uuid.UUID,
+        query: str,
+        limit: int = 20,
+        company_id: uuid.UUID | None = None,
+    ) -> list[Contact]:
+        stmt = select(Contact).where(Contact.tenant_id == tenant_id)
+        # Scoping to a company is what lets the deal form narrow the contact
+        # picker once a company is chosen (issue #38).
+        if company_id is not None:
+            stmt = stmt.where(Contact.company_id == company_id)
+        q = (query or "").strip()
+        if q:
+            # Escape LIKE wildcards so a term such as "50%" or "a_b" matches
+            # those characters literally instead of acting as a pattern.
+            escaped = q.lower().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            like = f"%{escaped}%"
+            stmt = stmt.where(
+                or_(
+                    func.lower(Contact.first_name).like(like, escape="\\"),
+                    func.lower(Contact.last_name).like(like, escape="\\"),
+                    func.lower(Contact.email).like(like, escape="\\"),
+                )
+            )
+        stmt = stmt.order_by(Contact.first_name, Contact.last_name).limit(limit)
+        result = await self._session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_by_ids(
+        self, tenant_id: uuid.UUID, ids: list[uuid.UUID]
+    ) -> list[Contact]:
+        if not ids:
+            return []
+        result = await self._session.execute(
+            select(Contact).where(Contact.tenant_id == tenant_id, Contact.id.in_(ids))
+        )
+        return list(result.scalars().all())
+
     async def update(self, contact: Contact, data: dict) -> Contact:
         for key, value in data.items():
             setattr(contact, key, value)

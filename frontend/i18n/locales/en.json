@@ -291,6 +291,120 @@
       "delete": "Delete"
     }
   },
+  "deals": {
+    "title": "Deals",
+    "add": "Add deal",
+    "edit": "Edit deal",
+    "view": "Deal detail",
+    "back_to_list": "Back to deals list",
+    "delete": "Delete",
+    "list_view": "Table view",
+    "submitting": "Saving...",
+    "created": "Deal created successfully.",
+    "saved": "Deal updated successfully.",
+    "deleted": "Deal deleted successfully.",
+    "abandoned": "Deal marked as abandoned.",
+    "reopened": "Deal reopened.",
+    "stage_changed": "Deal stage updated.",
+    "confirm_delete_title": "Delete deal",
+    "confirm_delete_body": "Deal {title} will be permanently deleted. Continue?",
+    "search_placeholder": "Search by title...",
+    "no_results": "No deals match your filters",
+    "clear_filters": "Clear filters",
+    "filter_stage": "All stages",
+    "filter_status": "All statuses",
+    "filter_type": "All types",
+    "filter_priority": "All priorities",
+    "filter_owner": "All owners",
+    "filter_company": "All companies",
+    "table": {
+      "title": "Title",
+      "stage": "Stage",
+      "status": "Status",
+      "value": "Value",
+      "probability": "Probability",
+      "expected_close_date": "Expected close",
+      "owner": "Owner",
+      "company": "Company"
+    },
+    "fields": {
+      "title": "Title",
+      "description": "Description",
+      "company_id": "Company",
+      "contact_id": "Contact",
+      "owner_id": "Owner",
+      "deal_type": "Deal type",
+      "value": "Value",
+      "currency": "Currency",
+      "probability": "Probability (%)",
+      "weighted_value": "Weighted value",
+      "expected_close_date": "Expected close date",
+      "actual_close_date": "Actual close date",
+      "priority": "Priority",
+      "source": "Source",
+      "next_step": "Next step",
+      "next_step_date": "Next step date",
+      "competitor": "Competitor",
+      "close_reason": "Close reason",
+      "lost_reason": "Lost reason",
+      "created_at": "Created at"
+    },
+    "stage": {
+      "lead": "Lead",
+      "qualified": "Qualified",
+      "proposal": "Proposal",
+      "won": "Won",
+      "lost": "Lost"
+    },
+    "status": {
+      "open": "Open",
+      "won": "Won",
+      "lost": "Lost",
+      "abandoned": "Abandoned"
+    },
+    "type": {
+      "none": "-",
+      "new_business": "New business",
+      "renewal": "Renewal",
+      "upsell": "Upsell",
+      "expansion": "Expansion",
+      "cross_sell": "Cross-sell"
+    },
+    "priority": {
+      "none": "-",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "pipeline": {
+      "title": "Pipeline",
+      "empty_column": "No deals yet",
+      "more_in_list": "{count} more - view in table",
+      "move_to": "Move deal to the {stage} stage.",
+      "won_title": "Mark deal as won",
+      "lost_title": "Mark deal as lost",
+      "lost_reason_placeholder": "Why was this deal lost?",
+      "confirm_move": "Move"
+    },
+    "validation": {
+      "title_required": "Title is required",
+      "expected_close_date_required": "Expected close date is required",
+      "date_invalid": "Invalid date format",
+      "value_invalid": "Value must be a non-negative number (max 2 decimals)",
+      "currency_invalid": "Currency must be 3 letters, e.g. IDR or USD",
+      "probability_invalid": "Probability must be between 0 and 100",
+      "lost_reason_required": "Lost reason is required",
+      "max_length": "Maximum {max} characters"
+    },
+    "actions": {
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "change_stage": "Change stage",
+      "abandon": "Abandon",
+      "reopen": "Reopen"
+    }
+  },
   "user_select": {
     "placeholder": "Select a teammate",
     "search_placeholder": "Search teammate...",
@@ -301,6 +415,11 @@
     "placeholder": "Select a company",
     "search_placeholder": "Search company...",
     "no_results": "No companies found"
+  },
+  "contact_select": {
+    "placeholder": "Select contact",
+    "search_placeholder": "Search contacts...",
+    "no_results": "No contacts found"
   },
   "location_select": {
     "country_label": "Country",
@@ -341,7 +460,11 @@
     "INVALID_STATE_REFERENCE": "Please select a valid state/province for the chosen country.",
     "INVALID_CITY_REFERENCE": "Please select a valid city for the chosen state/province.",
     "INTERNAL_ERROR": "An error occurred. Please try again.",
-    "unknown": "An unexpected error occurred."
+    "unknown": "An unexpected error occurred.",
+    "DEAL_NOT_FOUND": "Deal not found.",
+    "INVALID_CONTACT_REFERENCE": "The selected contact was not found.",
+    "INVALID_STAGE_TRANSITION": "This stage/status change is not allowed.",
+    "VALIDATION_ERROR": "The submitted data is invalid."
   },
   "common": {
     "loading": "Loading...",

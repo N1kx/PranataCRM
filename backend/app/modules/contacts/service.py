@@ -7,6 +7,7 @@ from app.modules.contacts.schemas import (
     ContactCreate,
     ContactListResponse,
     ContactResponse,
+    ContactSummary,
     ContactUpdate,
 )
 
@@ -75,6 +76,32 @@ class ContactService:
             total=total,
             page=page,
             page_size=page_size,
+        )
+
+    async def search_contacts(
+        self,
+        tenant_id: uuid.UUID,
+        query: str,
+        limit: int = 20,
+        company_id: uuid.UUID | None = None,
+    ) -> list[ContactSummary]:
+        rows = await self._repo.search(tenant_id, query, min(limit, 50), company_id)
+        return [self._to_summary(c) for c in rows]
+
+    async def lookup_contacts(
+        self, tenant_id: uuid.UUID, ids: list[uuid.UUID]
+    ) -> list[ContactSummary]:
+        rows = await self._repo.get_by_ids(tenant_id, ids[:100])
+        return [self._to_summary(c) for c in rows]
+
+    @staticmethod
+    def _to_summary(contact: Contact) -> ContactSummary:
+        name = f"{contact.first_name} {contact.last_name or ''}".strip()
+        return ContactSummary(
+            id=str(contact.id),
+            name=name,
+            email=contact.email,
+            company_id=str(contact.company_id) if contact.company_id else None,
         )
 
     async def update_contact(

@@ -5,6 +5,7 @@ from app.modules.contacts.schemas import (
     ContactCreate,
     ContactListResponse,
     ContactResponse,
+    ContactSummary,
     ContactUpdate,
 )
 from app.modules.contacts.service import ContactService
@@ -113,6 +114,20 @@ class ContactUseCase:
             sort=sort,
             order=order,
         )
+
+    async def search_contacts(
+        self,
+        tenant_id: uuid.UUID,
+        query: str,
+        limit: int = 20,
+        company_id: uuid.UUID | None = None,
+    ) -> list[ContactSummary]:
+        return await self._service.search_contacts(tenant_id, query, limit, company_id)
+
+    async def lookup_contacts(
+        self, tenant_id: uuid.UUID, ids: list[uuid.UUID]
+    ) -> list[ContactSummary]:
+        return await self._service.lookup_contacts(tenant_id, ids)
 
     async def update_contact(
         self,
