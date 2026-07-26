@@ -26,8 +26,8 @@
       <!-- Notifications (placeholder) -->
       <UButton icon="i-lucide-bell" color="neutral" variant="ghost" disabled />
       <!-- New deal CTA -->
-      <UButton icon="i-lucide-plus" color="primary" size="sm" disabled>
-        Deal baru
+      <UButton icon="i-lucide-plus" color="primary" size="sm" to="/app/deals/new">
+        {{ t('deals.add') }}
       </UButton>
     </div>
   </header>
@@ -35,4 +35,6 @@
 
 <script setup lang="ts">
 defineEmits<{ 'toggle-sidebar': [] }>()
+
+const { t } = useI18n()
 </script>

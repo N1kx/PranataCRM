@@ -152,6 +152,11 @@ import { DEAL_STAGES } from '~/types/deals'
  * touching only this component.
  */
 
+const props = defineProps<{
+  /** Scope the board to one owner; null/undefined loads every owner's deals. */
+  ownerId?: string | null
+}>()
+
 const emit = defineEmits<{
   /** Bubbled up so the page can refresh a sibling list view. */
   changed: []
@@ -217,7 +222,13 @@ async function load() {
   loadError.value = false
   try {
     const results = await Promise.all(
-      DEAL_STAGES.map(stage => list({ stage, pageSize: COLUMN_CAP, sort: 'created_at', order: 'desc' })),
+      DEAL_STAGES.map(stage => list({
+        stage,
+        ownerId: props.ownerId ?? undefined,
+        pageSize: COLUMN_CAP,
+        sort: 'created_at',
+        order: 'desc',
+      })),
     )
     if (seq !== loadSeq) return
     const next = emptyColumns()
@@ -413,6 +424,10 @@ async function onReopen(deal: Deal) {
 }
 
 onMounted(load)
+
+// Re-fetch when the page changes the owner scope. The load() sequence token
+// already guards against an older request landing after a newer one.
+watch(() => props.ownerId, load)
 
 defineExpose({ refresh: load })
 </script>

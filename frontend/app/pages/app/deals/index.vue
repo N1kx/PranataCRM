@@ -31,7 +31,30 @@
     </div>
 
     <!-- Pipeline view -->
-    <DealsPipeline v-if="view === 'pipeline'" ref="pipelineRef" />
+    <template v-if="view === 'pipeline'">
+      <!-- Owner scope, shown here too so the board's default ("my deals") is
+           visible and changeable rather than an invisible filter. -->
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="w-full sm:w-64">
+          <AppUserSelect
+            :model-value="ownerId"
+            :initial="ownerInitial"
+            :placeholder="t('deals.filter_owner')"
+            @update:model-value="setOwner"
+          />
+        </div>
+        <AppButton
+          v-if="hasActiveFilters"
+          color="neutral"
+          variant="ghost"
+          size="xs"
+          @click="clearFilters"
+        >
+          {{ t('deals.clear_filters') }}
+        </AppButton>
+      </div>
+      <DealsPipeline ref="pipelineRef" :owner-id="ownerId" />
+    </template>
 
     <template v-else>
       <!-- Error state -->
@@ -64,9 +87,10 @@
           <USelect v-model="priorityModel" :items="priorityFilterOptions" class="w-full sm:w-40" />
           <div class="w-full sm:w-56">
             <AppUserSelect
-              v-model="ownerId"
+              :model-value="ownerId"
               :initial="ownerInitial"
               :placeholder="t('deals.filter_owner')"
+              @update:model-value="setOwner"
             />
           </div>
           <div class="w-full sm:w-56">
@@ -205,6 +229,7 @@ import type { UserSummary } from '~/types/user'
 definePageMeta({ layout: 'app', middleware: 'auth' })
 
 const { t, locale } = useI18n()
+const { user: currentUser } = useAuth()
 const { list, remove } = useDeals()
 const { lookup: lookupUsers } = useUsers()
 const { lookup: lookupCompanies } = useCompanies()
@@ -237,7 +262,17 @@ const stage = ref<DealStage | ''>(inList(DEAL_STAGES, q0.stage))
 const status = ref<DealStatus | ''>(inList(DEAL_STATUSES, q0.status))
 const dealType = ref<DealType | ''>(inList(DEAL_TYPES, q0.deal_type))
 const priority = ref<DealPriority | ''>(inList(DEAL_PRIORITIES, q0.priority))
-const ownerId = ref<string | null>(typeof q0.owner_id === 'string' ? q0.owner_id : null)
+// Owner defaults to the signed-in user: a salesperson opening the board cares
+// about their own pipeline first. `owner_id=all` in the URL is the explicit
+// opt-out (managers, shared links) — distinguishing it from an absent param is
+// what stops a cleared filter from silently snapping back to "mine" on reload.
+// null here means "every owner".
+const ALL_OWNERS = 'all'
+const ownerId = ref<string | null>(
+  typeof q0.owner_id === 'string'
+    ? (q0.owner_id === ALL_OWNERS ? null : q0.owner_id)
+    : (currentUser.value?.id ?? null),
+)
 const companyId = ref<string | null>(typeof q0.company_id === 'string' ? q0.company_id : null)
 const contactId = ref<string | null>(typeof q0.contact_id === 'string' ? q0.contact_id : null)
 const sort = ref<DealSortField>(
@@ -279,9 +314,12 @@ const priorityFilterOptions = computed(() => [
   ...DEAL_PRIORITIES.map(v => ({ value: v, label: t(`deals.priority.${v}`) })),
 ])
 
+// Owner counts as "active" only when it deviates from the default (me), so the
+// clear-filters affordance does not appear on a freshly opened board.
 const hasActiveFilters = computed(() =>
   !!(searchInput.value || stage.value || status.value || dealType.value
-    || priority.value || ownerId.value || companyId.value || contactId.value),
+    || priority.value || companyId.value || contactId.value)
+  || ownerId.value !== (currentUser.value?.id ?? null),
 )
 
 function clearFilters() {
@@ -290,11 +328,27 @@ function clearFilters() {
   status.value = ''
   dealType.value = ''
   priority.value = ''
-  ownerId.value = null
   companyId.value = null
   contactId.value = null
-  ownerInitial.value = null
   companyInitial.value = null
+  // Back to the default owner, not to "everyone" — clearing restores the
+  // initial view rather than widening it.
+  setOwner(currentUser.value?.id ?? null)
+}
+
+/** Set the owner filter and keep its resolved label in sync. */
+function setOwner(id: string | null) {
+  ownerId.value = id
+  if (!id) {
+    ownerInitial.value = null
+    return
+  }
+  if (id === currentUser.value?.id) {
+    const me = currentUser.value
+    ownerInitial.value = me
+      ? { id: me.id, full_name: me.full_name, email: me.email }
+      : null
+  }
 }
 
 function toggleSort(col: string) {
@@ -332,7 +386,13 @@ watch([view, page, q, stage, status, dealType, priority, ownerId, companyId, con
       ...(status.value ? { status: status.value } : {}),
       ...(dealType.value ? { deal_type: dealType.value } : {}),
       ...(priority.value ? { priority: priority.value } : {}),
-      ...(ownerId.value ? { owner_id: ownerId.value } : {}),
+      // Omitted when it equals the default (the signed-in user) to keep the
+      // URL clean; 'all' is written explicitly so it survives a reload.
+      ...(ownerId.value === null
+        ? { owner_id: ALL_OWNERS }
+        : ownerId.value !== currentUser.value?.id
+          ? { owner_id: ownerId.value }
+          : {}),
       ...(companyId.value ? { company_id: companyId.value } : {}),
       ...(contactId.value ? { contact_id: contactId.value } : {}),
       ...(sort.value !== 'created_at' ? { sort: sort.value } : {}),
