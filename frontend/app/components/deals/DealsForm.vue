@@ -306,10 +306,17 @@ const priorityModel = computed({
   set: (v: string) => { form.priority = (v === NONE_SENTINEL ? '' : v) as DealPriority | '' },
 })
 
-// Columns that are NOT NULL on the backend: they may never be sent as an
-// explicit null, so a blank falls back to its default instead of clearing.
-const NON_NULLABLE = new Set(['title', 'expected_close_date', 'value', 'currency', 'probability'])
+// Fields the backend refuses to receive as an explicit null. `owner_id` is one
+// of them: every deal must keep an accountable owner, so it can be reassigned
+// but not cleared — unlike company_id/contact_id, which are optional soft
+// references and *are* unlinkable below.
+const NON_NULLABLE = new Set([
+  'title', 'expected_close_date', 'owner_id', 'value', 'currency', 'probability',
+])
 const DEFAULTS: Record<string, string> = { value: '0', probability: '0', currency: 'IDR' }
+
+/** Blank covers both a cleared text input ('') and a cleared picker (null). */
+const isBlank = (v: unknown) => v === '' || v === null
 
 /**
  * Build the payload: trim strings, keep money as strings, drop empty optional
@@ -324,7 +331,14 @@ function buildPayload(): DealUpdatePayload {
     if (key === 'currency' && typeof value === 'string') value = value.toUpperCase()
     // probability is an integer on the wire; value/weighted_value stay strings.
     if (key === 'probability') value = Number(value === '' ? DEFAULTS.probability : value)
-    if (NON_NULLABLE.has(key) && value === '') value = DEFAULTS[key] ?? ''
+    if (NON_NULLABLE.has(key) && isBlank(value)) {
+      const fallback = DEFAULTS[key]
+      // Fields with a server-side default fall back to it; the rest (title,
+      // dates, owner) are omitted entirely rather than sent blank — the Zod
+      // schema is what surfaces the required-field error to the user.
+      if (fallback === undefined) continue
+      value = fallback
+    }
 
     if (props.deal) {
       const originalRaw = original[key as keyof typeof original]

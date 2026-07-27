@@ -62,13 +62,15 @@
             <div
               v-for="deal in columns[stage]"
               :key="deal.id"
-              :draggable="!isAbandoned(deal)"
+              :draggable="isDraggable(deal)"
               class="rounded-md border bg-white dark:bg-gray-900 p-3 text-sm shadow-sm transition"
               :class="[
-                isAbandoned(deal)
-                  ? 'opacity-50 cursor-not-allowed border-gray-200 dark:border-gray-800'
-                  : 'cursor-grab hover:shadow-md border-gray-200 dark:border-gray-800',
-                movingId === deal.id ? 'animate-pulse' : '',
+                'border-gray-200 dark:border-gray-800',
+                isAbandoned(deal) ? 'opacity-50' : '',
+                // Cursor follows the same rule as the draggable attribute, so a
+                // card with a stage change in flight stops advertising a grab.
+                isDraggable(deal) ? 'cursor-grab hover:shadow-md' : 'cursor-not-allowed',
+                movingIds.has(deal.id) ? 'animate-pulse' : '',
               ]"
               @dragstart="onDragStart(deal, stage, $event)"
               @dragend="onDragEnd"
@@ -281,15 +283,28 @@ async function resolveLabels() {
 // ── Drag & drop ──────────────────────────────────────────────────────────────
 
 const dragOverStage = ref<DealStage | null>(null)
-const movingId = ref<string | null>(null)
+// A set, not a single id: two cards can be in flight at once, and a single ref
+// would be overwritten by the second drag — dropping the in-flight guard on the
+// first one and letting it be dragged again mid-request.
+const movingIds = ref<Set<string>>(new Set())
 const reopeningId = ref<string | null>(null)
+
+/**
+ * A card is draggable unless it is abandoned (the backend rejects stage changes
+ * on those) or already has a stage change in flight — dragging it again would
+ * fire a second PATCH for the same deal with no ordering guarantee.
+ */
+function isDraggable(deal: Deal): boolean {
+  return !isAbandoned(deal) && !movingIds.value.has(deal.id)
+}
 
 /** The card currently being dragged, plus where it came from (for rollback). */
 let dragged: { deal: Deal, from: DealStage, index: number } | null = null
 
 function onDragStart(deal: Deal, from: DealStage, event: DragEvent) {
-  if (isAbandoned(deal)) {
-    // Abandoned deals can't change stage (backend 422s) — refuse the drag.
+  if (!isDraggable(deal)) {
+    // Abandoned (backend 422s on a stage change) or already in flight —
+    // refuse the drag here too, not just via the draggable attribute.
     event.preventDefault()
     return
   }
@@ -376,7 +391,7 @@ async function commitMove(
   index: number,
   payload: StageChangePayload,
 ) {
-  movingId.value = deal.id
+  movingIds.value.add(deal.id)
   try {
     const updated = await moveStage(deal.id, payload)
     // Replace the optimistic card with the server's version, which carries the
@@ -396,7 +411,7 @@ async function commitMove(
     })
   }
   finally {
-    movingId.value = null
+    movingIds.value.delete(deal.id)
   }
 }
 

@@ -164,3 +164,74 @@ class ReferenceGuardTests(DealsTestCase):
         finally:
             self._clear_override(app)
         self.assertEqual(resp.status_code, 200)
+
+    # ── owner_id may be reassigned but never cleared ──────────────────────────
+
+    @patch("app.modules.deals.repository.DealRepository.update", new_callable=AsyncMock)
+    @patch("app.modules.deals.repository.DealRepository.get_by_id", new_callable=AsyncMock)
+    async def test_update_deal_cannot_unlink_owner(self, mock_get, mock_update):
+        # A deal must always have an accountable owner. Unlike company_id /
+        # contact_id, an explicit null here is a 422 rather than an unlink —
+        # otherwise the create-time requirement could be trivially bypassed.
+        mock_get.return_value = _fake_deal(
+            self._deal_id, self._tenant_id, owner_id=self._owner_id,
+        )
+        app = self._override_current_user()
+        try:
+            resp = await self.client.patch(
+                f"/api/v1/deals/{self._deal_id}", json={"owner_id": None},
+            )
+        finally:
+            self._clear_override(app)
+
+        self.assertEqual(resp.status_code, 422)
+        mock_update.assert_not_called()
+
+    @patch("app.modules.deals.repository.DealRepository.update", new_callable=AsyncMock)
+    @patch("app.modules.deals.repository.DealRepository.get_by_id", new_callable=AsyncMock)
+    async def test_update_deal_can_reassign_owner(self, mock_get, mock_update):
+        # Reassigning to a different (existing) user stays allowed — only
+        # clearing is blocked.
+        new_owner = uuid.uuid4()
+        mock_get.return_value = _fake_deal(
+            self._deal_id, self._tenant_id, owner_id=self._owner_id,
+        )
+        mock_update.return_value = _fake_deal(
+            self._deal_id, self._tenant_id, owner_id=new_owner,
+        )
+        app = self._override_current_user()
+        try:
+            resp = await self.client.patch(
+                f"/api/v1/deals/{self._deal_id}", json={"owner_id": str(new_owner)},
+            )
+        finally:
+            self._clear_override(app)
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(mock_update.call_args.args[1]["owner_id"], new_owner)
+
+    @patch("app.modules.deals.repository.DealRepository.update", new_callable=AsyncMock)
+    @patch("app.modules.deals.repository.DealRepository.get_by_id", new_callable=AsyncMock)
+    async def test_update_deal_can_still_unlink_company_and_contact(
+        self, mock_get, mock_update,
+    ):
+        # Guard against over-tightening: company_id/contact_id are optional
+        # soft references and must remain unlinkable.
+        mock_get.return_value = _fake_deal(
+            self._deal_id, self._tenant_id,
+            company_id=self._company_id, contact_id=self._contact_id,
+        )
+        mock_update.return_value = _fake_deal(self._deal_id, self._tenant_id)
+        app = self._override_current_user()
+        try:
+            resp = await self.client.patch(
+                f"/api/v1/deals/{self._deal_id}",
+                json={"company_id": None, "contact_id": None},
+            )
+        finally:
+            self._clear_override(app)
+
+        self.assertEqual(resp.status_code, 200)
+        call_data = mock_update.call_args.args[1]
+        self.assertIsNone(call_data["company_id"])
+        self.assertIsNone(call_data["contact_id"])

@@ -222,6 +222,15 @@ class DealUpdate(_DealFieldsMixin):
     def _reject_null_expected_close_date(cls, v):
         return _reject_null("expected_close_date", v)
 
+    @field_validator("owner_id", mode="before")
+    @classmethod
+    def _reject_null_owner_id(cls, v):
+        # A deal must always have an accountable owner, so unlike company_id /
+        # contact_id (optional soft references that may be unlinked), owner_id
+        # can be reassigned but never cleared. Omitting it from a PATCH is
+        # still fine — this validator does not run for unset fields.
+        return _reject_null("owner_id", v)
+
     @field_validator("status", mode="before")
     @classmethod
     def _validate_status(cls, v):
