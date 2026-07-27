@@ -336,19 +336,40 @@ function clearFilters() {
   setOwner(currentUser.value?.id ?? null)
 }
 
-/** Set the owner filter and keep its resolved label in sync. */
-function setOwner(id: string | null) {
-  ownerId.value = id
+// Monotonic token so a slow lookup for a previously-picked owner can't land
+// after a newer one and relabel the picker with the wrong person.
+let ownerLabelSeq = 0
+
+/**
+ * Keep `ownerInitial` in step with `ownerId`.
+ *
+ * Picking someone other than yourself has to go through a lookup — without it
+ * the label kept whatever it held before, and the picker only looked right
+ * because it tracks its own selection internally. Anything that re-read
+ * `ownerInitial` (a re-render, a shared link) would show the stale name.
+ */
+async function resolveOwnerLabel(id: string | null) {
+  const seq = ++ownerLabelSeq
   if (!id) {
     ownerInitial.value = null
     return
   }
-  if (id === currentUser.value?.id) {
-    const me = currentUser.value
-    ownerInitial.value = me
-      ? { id: me.id, full_name: me.full_name, email: me.email }
-      : null
+  const me = currentUser.value
+  if (me && id === me.id) {
+    // Already in memory — no round-trip for the common (default) case.
+    ownerInitial.value = { id: me.id, full_name: me.full_name, email: me.email }
+    return
   }
+  try {
+    const [owner] = await lookupUsers([id])
+    if (seq === ownerLabelSeq) ownerInitial.value = owner ?? null
+  }
+  catch { /* picker keeps showing its own selection; label just stays as-is */ }
+}
+
+function setOwner(id: string | null) {
+  ownerId.value = id
+  void resolveOwnerLabel(id)
 }
 
 function toggleSort(col: string) {
@@ -495,13 +516,7 @@ async function loadLabels(deals: Deal[]) {
 // Resolve labels for filters that arrived via the URL, so the pickers aren't
 // blank on a shared link.
 async function resolveFilterLabels() {
-  if (ownerId.value) {
-    try {
-      const [owner] = await lookupUsers([ownerId.value])
-      ownerInitial.value = owner ?? null
-    }
-    catch { /* picker stays unlabelled */ }
-  }
+  await resolveOwnerLabel(ownerId.value)
   if (companyId.value) {
     try {
       const [company] = await lookupCompanies([companyId.value])
