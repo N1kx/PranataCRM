@@ -337,7 +337,7 @@ function moveCard(deal: Deal, from: DealStage, to: DealStage, index?: number) {
 const reasonModalOpen = ref(false)
 const pendingStage = ref<DealStage>('won')
 const isSubmittingReason = ref(false)
-/** Set while a won/lost drop waits on the reason modal, so cancel can roll back. */
+/** A won/lost drop waiting on its reason modal. The card has NOT moved yet. */
 let pendingMove: { deal: Deal, from: DealStage, index: number, to: DealStage } | null = null
 
 function onDrop(to: DealStage) {
@@ -346,19 +346,22 @@ function onDrop(to: DealStage) {
   dragged = null
   if (!d || d.from === to) return
 
-  // Optimistic: the card moves immediately, and is rolled back if the API call
-  // (or the reason modal) does not go through.
-  moveCard(d.deal, d.from, to)
-
   if (to === 'won' || to === 'lost') {
-    // These carry side effects and (for lost) a required reason — collect it
-    // before committing.
+    // Deliberately NOT moved optimistically: these need a reason (required for
+    // lost), so the card only moves once the modal is confirmed. That keeps
+    // dismissal free of any rollback, and — more importantly — lets a failed
+    // attempt be retried from a clean state. Moving first and rolling back on
+    // failure would re-insert the card into a column that already holds it on
+    // the second failure, duplicating it.
     pendingMove = { deal: d.deal, from: d.from, index: d.index, to }
     pendingStage.value = to
     reasonModalOpen.value = true
     return
   }
 
+  // Open stages have no modal in the way, so move optimistically and let
+  // commitMove roll back if the call fails.
+  moveCard(d.deal, d.from, to)
   void commitMove(d.deal, d.from, d.index, { stage: to })
 }
 
@@ -366,31 +369,40 @@ function onReasonConfirm(payload: StageChangePayload) {
   const p = pendingMove
   if (!p) return
   isSubmittingReason.value = true
-  void commitMove(p.deal, p.from, p.index, payload).finally(() => {
-    isSubmittingReason.value = false
-    reasonModalOpen.value = false
-    pendingMove = null
-  })
+  // Apply the move now, so the board reflects the change while the call is in
+  // flight; commitMove undoes it if the call fails.
+  moveCard(p.deal, p.from, p.to)
+  void commitMove(p.deal, p.from, p.index, payload)
+    .then((ok) => {
+      // On failure keep the modal open so the reason the user typed survives —
+      // the card is already back where it started, so a retry starts clean.
+      if (!ok) return
+      reasonModalOpen.value = false
+      pendingMove = null
+    })
+    .finally(() => {
+      isSubmittingReason.value = false
+    })
 }
 
 function onReasonCancel() {
-  const p = pendingMove
+  // Nothing was moved and nothing was sent, so there is nothing to undo.
   pendingMove = null
-  if (!p) return
-  // Roll the optimistic move back — nothing was sent.
-  moveCard(p.deal, p.to, p.from, p.index)
 }
 
 /**
  * Commit an already-optimistically-applied move. On failure the card is
  * returned to its original column and index and the error is surfaced.
+ *
+ * Returns whether the move was persisted, so the reason modal can stay open on
+ * failure instead of discarding what the user typed.
  */
 async function commitMove(
   deal: Deal,
   from: DealStage,
   index: number,
   payload: StageChangePayload,
-) {
+): Promise<boolean> {
   movingIds.value.add(deal.id)
   try {
     const updated = await moveStage(deal.id, payload)
@@ -400,6 +412,7 @@ async function commitMove(
     const at = col.findIndex(d => d.id === deal.id)
     if (at !== -1) col[at] = updated
     emit('changed')
+    return true
   }
   catch (err: unknown) {
     const e = err as { code?: string }
@@ -409,6 +422,7 @@ async function commitMove(
       color: 'error',
       icon: 'i-lucide-circle-alert',
     })
+    return false
   }
   finally {
     movingIds.value.delete(deal.id)
