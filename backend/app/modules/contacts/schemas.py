@@ -259,3 +259,13 @@ class ContactListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class ContactSummary(BaseModel):
+    """Lightweight shape for the contact_id autocomplete picker (search/lookup),
+    mirroring CompanySummary. `name` is the already-joined display name so
+    callers never have to re-assemble first/last name themselves."""
+    id: str
+    name: str
+    email: str | None = None
+    company_id: str | None = None

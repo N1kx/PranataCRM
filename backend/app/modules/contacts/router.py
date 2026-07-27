@@ -12,6 +12,7 @@ from app.modules.contacts.schemas import (
     ContactCreate,
     ContactListResponse,
     ContactResponse,
+    ContactSummary,
     ContactUpdate,
 )
 from app.modules.contacts.use_case import ContactUseCase
@@ -103,6 +104,45 @@ async def list_contacts(
         sort=sort,
         order=order,
     )
+
+
+# Declared before /{contact_id} so these literal paths are matched first and
+# not swallowed by the UUID path param (mirrors companies/router.py).
+@router.get("/search", response_model=list[ContactSummary])
+async def search_contacts(
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    contacts: Annotated[ContactUseCase, Depends(get_contact_usecase)],
+    q: str = "",
+    # Bounded at the edge so a crafted value (e.g. -1 -> SQL "LIMIT -1", which
+    # Postgres rejects) can't reach the query and 500 the endpoint.
+    limit: int = Query(default=20, ge=1, le=50),
+    company_id: str | None = None,
+) -> list[ContactSummary]:
+    company_uuid: uuid.UUID | None = None
+    if company_id is not None:
+        try:
+            company_uuid = uuid.UUID(company_id)
+        except ValueError:
+            raise ContactQueryValidationError("company_id must be a valid UUID.")
+    return await contacts.search_contacts(current_user.tenant_id, q, limit, company_uuid)
+
+
+@router.get("/lookup", response_model=list[ContactSummary])
+async def lookup_contacts(
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    contacts: Annotated[ContactUseCase, Depends(get_contact_usecase)],
+    ids: str = "",
+) -> list[ContactSummary]:
+    parsed = []
+    for x in ids.split(","):
+        x = x.strip()
+        if not x:
+            continue
+        try:
+            parsed.append(uuid.UUID(x))
+        except ValueError:
+            continue
+    return await contacts.lookup_contacts(current_user.tenant_id, parsed)
 
 
 @router.get("/{contact_id}", response_model=ContactResponse)
