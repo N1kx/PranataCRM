@@ -423,10 +423,10 @@ const columns = computed<TableColumn<Deal>[]>(() => [
   { id: 'actions', header: '' },
 ])
 
+// expected_close_date is a calendar date, so it must render the same in every
+// timezone — see formatCalendarDate in utils/date.ts.
 function formatDate(value: string | null | undefined): string {
-  if (!value) return '-'
-  const d = new Date(value)
-  return Number.isNaN(d.getTime()) ? value : d.toLocaleDateString(locale.value)
+  return formatCalendarDate(value, locale.value)
 }
 
 // Monotonic token so a slow earlier request (e.g. rapid filter/sort changes on

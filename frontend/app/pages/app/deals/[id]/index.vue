@@ -222,10 +222,10 @@ async function resolveLabels(d: Deal) {
 
 onMounted(loadDeal)
 
+// Calendar dates (close/next-step dates) must not shift with the viewer's
+// timezone; created_at below is an instant and deliberately does convert.
 function formatDate(value: string | null | undefined): string {
-  if (!value) return ''
-  const d = new Date(value)
-  return Number.isNaN(d.getTime()) ? value : d.toLocaleDateString(locale.value)
+  return formatCalendarDate(value, locale.value, '')
 }
 
 const detailFields = computed(() => {
@@ -247,7 +247,9 @@ const detailFields = computed(() => {
     { label: t('deals.fields.next_step_date'), value: formatDate(d.next_step_date) },
     { label: t('deals.fields.close_reason'), value: d.close_reason },
     { label: t('deals.fields.lost_reason'), value: d.lost_reason },
-    { label: t('deals.fields.created_at'), value: new Date(d.created_at).toLocaleString(locale.value) },
+    // An instant, not a calendar date — showing it in the reader's own
+    // timezone is the correct behaviour here.
+    { label: t('deals.fields.created_at'), value: formatInstant(d.created_at, locale.value) },
   ]
 })
 

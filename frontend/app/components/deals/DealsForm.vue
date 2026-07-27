@@ -12,8 +12,11 @@
       <AppField :label="t('deals.fields.title')" name="title" required>
         <AppInput v-model="form.title" :disabled="isSaving" />
       </AppField>
+      <!-- Capped width: a date field only ever holds dd/mm/yyyy, and stretching
+           it to the grid column pushes the browser's calendar icon far from the
+           text, making it easy to miss and awkward to hit. -->
       <AppField :label="t('deals.fields.expected_close_date')" name="expected_close_date" required>
-        <AppInput v-model="form.expected_close_date" type="date" :disabled="isSaving" />
+        <AppInput v-model="form.expected_close_date" type="date" :disabled="isSaving" class="max-w-48" />
       </AppField>
 
       <AppField :label="t('deals.fields.company_id')" name="company_id" :error="fieldErrors.company_id">
@@ -73,7 +76,7 @@
         <AppInput v-model="form.next_step" :disabled="isSaving" />
       </AppField>
       <AppField :label="t('deals.fields.next_step_date')" name="next_step_date">
-        <AppInput v-model="form.next_step_date" type="date" :disabled="isSaving" />
+        <AppInput v-model="form.next_step_date" type="date" :disabled="isSaving" class="max-w-48" />
       </AppField>
     </div>
 
