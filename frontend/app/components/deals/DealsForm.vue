@@ -38,14 +38,19 @@
         <USelect v-model="dealTypeModel" :items="dealTypeOptions" :disabled="isSaving" class="w-full" />
       </AppField>
 
+      <!-- Deliberately type="text" + inputmode, NOT type="number": Nuxt UI's
+           UInput coerces a number-typed field through looseToNumber() before
+           emitting, which would both break the string-typed Zod schema and
+           round money through a JS float. inputmode still brings up the
+           numeric keypad on mobile. -->
       <AppField :label="t('deals.fields.value')" name="value">
-        <AppInput v-model="form.value" type="number" :disabled="isSaving" />
+        <AppInput v-model="form.value" inputmode="decimal" :disabled="isSaving" />
       </AppField>
       <AppField :label="t('deals.fields.currency')" name="currency" required>
         <AppInput v-model="form.currency" :disabled="isSaving" />
       </AppField>
       <AppField :label="t('deals.fields.probability')" name="probability">
-        <AppInput v-model="form.probability" type="number" :disabled="isSaving" />
+        <AppInput v-model="form.probability" inputmode="numeric" :disabled="isSaving" />
       </AppField>
       <!-- Server-computed: shown so the user can see the effect of value x
            probability, but never part of the payload. -->

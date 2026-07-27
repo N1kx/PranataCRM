@@ -33,8 +33,11 @@
       <AppField :label="t('companies.fields.size')" name="size">
         <USelect v-model="sizeModel" :items="sizeOptions" :disabled="isSaving" class="w-full" />
       </AppField>
+      <!-- inputmode, not type="number": UInput coerces a number-typed field
+           via looseToNumber() before emitting, which fails this form's
+           string-based Zod schema with a bare "Invalid input". -->
       <AppField :label="t('companies.fields.employee_count')" name="employee_count">
-        <AppInput v-model="form.employee_count" type="number" :disabled="isSaving" />
+        <AppInput v-model="form.employee_count" inputmode="numeric" :disabled="isSaving" />
       </AppField>
       <AppField :label="t('companies.fields.company_type')" name="company_type">
         <USelect v-model="form.company_type" :items="companyTypeOptions" :disabled="isSaving" class="w-full" />
