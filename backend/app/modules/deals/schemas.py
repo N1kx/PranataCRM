@@ -158,6 +158,10 @@ class DealCreate(_DealFieldsMixin):
     # required specifically on create — same business-rule-not-migration
     # pattern as CompanyCreate.country.
     expected_close_date: date
+    # owner_id is nullable at the DB/model level (unchanged; still unlinkable
+    # via PATCH — see DealUpdate) but required on create so every new deal has
+    # an accountable owner from the start — same pattern as expected_close_date.
+    owner_id: str
     # stage defaults to 'lead' on create; not accepted at all on update —
     # PATCH /deals/{id}/stage is the only way to change it afterwards.
     stage: str | None = None
@@ -169,6 +173,14 @@ class DealCreate(_DealFieldsMixin):
             v = v.strip()
         if not v:
             raise ValueError("title must be between 1 and 255 characters.")
+        return v
+
+    @field_validator("owner_id", mode="before")
+    @classmethod
+    def _require_owner_id(cls, v: str | None) -> str:
+        v = _trim(v) if isinstance(v, str) else v
+        if not v:
+            raise ValueError("owner_id is required.")
         return v
 
     @field_validator("stage", mode="before")

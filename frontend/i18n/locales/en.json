@@ -388,6 +388,7 @@
     },
     "validation": {
       "title_required": "Title is required",
+      "owner_required": "Owner is required",
       "expected_close_date_required": "Expected close date is required",
       "date_invalid": "Invalid date format",
       "value_invalid": "Value must be a non-negative number (max 2 decimals)",

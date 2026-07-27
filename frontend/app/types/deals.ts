@@ -53,10 +53,13 @@ export interface Deal {
 export interface DealCreatePayload {
   title: string
   expected_close_date: string
+  // Required on create (unlike company_id/contact_id, which stay optional
+  // soft references) so every deal has an accountable owner from the start —
+  // still nullable on update via DealUpdatePayload for unlinking.
+  owner_id: string
   description?: string | null
   contact_id?: string | null
   company_id?: string | null
-  owner_id?: string | null
   deal_type?: DealType | null
   value?: string
   currency?: string

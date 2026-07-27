@@ -31,7 +31,7 @@
           :disabled="isSaving"
         />
       </AppField>
-      <AppField :label="t('deals.fields.owner_id')" name="owner_id" :error="fieldErrors.owner_id">
+      <AppField :label="t('deals.fields.owner_id')" name="owner_id" :error="fieldErrors.owner_id" required>
         <AppUserSelect v-model="form.owner_id" :initial="ownerInitial" :disabled="isSaving" />
       </AppField>
       <AppField :label="t('deals.fields.deal_type')" name="deal_type">
@@ -247,6 +247,10 @@ const schema = computed(() => z.object({
     .min(1, t('deals.validation.expected_close_date_required'))
     // Both past and future dates are legitimate (overdue/backdated deals).
     .regex(/^\d{4}-\d{2}-\d{2}$/, t('deals.validation.date_invalid')),
+  // Nullable in the form model (AppUserSelect's clear button sets null), but
+  // must resolve to an id before submit — every deal needs an owner.
+  owner_id: z.string().min(1, t('deals.validation.owner_required')).nullable()
+    .refine(v => !!v, t('deals.validation.owner_required')),
   // Money is validated as a decimal string; it is never parsed to a number.
   value: z.literal('').or(
     z.string().trim().regex(/^\d+(\.\d{1,2})?$/, t('deals.validation.value_invalid')),
@@ -357,10 +361,15 @@ async function onSubmit() {
         : props.deal
     }
     else {
+      // The Zod schema (owner_id.refine) already guarantees this before
+      // onSubmit runs — UForm blocks the submit event otherwise — but the
+      // narrowing keeps DealCreatePayload's required owner_id honest here too.
+      if (!form.owner_id) throw new Error('unreachable: owner_id validated by schema')
       saved = await create({
         ...buildPayload(),
         title: form.title.trim(),
         expected_close_date: form.expected_close_date.trim(),
+        owner_id: form.owner_id,
       })
     }
     emit('saved', saved)

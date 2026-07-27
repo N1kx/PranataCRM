@@ -80,7 +80,10 @@ class DealsTests(DealsTestCase):
         try:
             resp = await self.client.post(
                 "/api/v1/deals",
-                json={"title": "Big Sale", "expected_close_date": "2026-12-31"},
+                json={
+                    "title": "Big Sale", "expected_close_date": "2026-12-31",
+                    "owner_id": str(self._user_id),
+                },
             )
         finally:
             self._clear_override(app)
@@ -105,7 +108,35 @@ class DealsTests(DealsTestCase):
     async def test_create_deal_without_expected_close_date_returns_422(self):
         app = self._override_current_user()
         try:
-            resp = await self.client.post("/api/v1/deals", json={"title": "Big Sale"})
+            resp = await self.client.post(
+                "/api/v1/deals",
+                json={"title": "Big Sale", "owner_id": str(self._user_id)},
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
+
+    async def test_create_deal_without_owner_id_returns_422(self):
+        app = self._override_current_user()
+        try:
+            resp = await self.client.post(
+                "/api/v1/deals",
+                json={"title": "Big Sale", "expected_close_date": "2026-12-31"},
+            )
+        finally:
+            self._clear_override(app)
+        self.assertEqual(resp.status_code, 422)
+
+    async def test_create_deal_blank_owner_id_returns_422(self):
+        app = self._override_current_user()
+        try:
+            resp = await self.client.post(
+                "/api/v1/deals",
+                json={
+                    "title": "Big Sale", "expected_close_date": "2026-12-31",
+                    "owner_id": "   ",
+                },
+            )
         finally:
             self._clear_override(app)
         self.assertEqual(resp.status_code, 422)
@@ -158,7 +189,7 @@ class DealsTests(DealsTestCase):
                 "/api/v1/deals",
                 json={
                     "title": "Big Sale", "expected_close_date": "2026-12-31",
-                    "stage": "bogus",
+                    "owner_id": str(self._user_id), "stage": "bogus",
                 },
             )
         finally:
@@ -180,7 +211,7 @@ class DealsTests(DealsTestCase):
                     "/api/v1/deals",
                     json={
                         "title": "Big Sale", "expected_close_date": "2026-12-31",
-                        "status": "won",
+                        "owner_id": str(self._user_id), "status": "won",
                     },
                 )
             finally:
@@ -201,6 +232,7 @@ class DealsTests(DealsTestCase):
                 "/api/v1/deals",
                 json={
                     "title": "Big Sale", "expected_close_date": "2026-12-31",
+                    "owner_id": str(self._user_id),
                     "value": "1000000", "probability": 40,
                 },
             )

@@ -388,6 +388,7 @@
     },
     "validation": {
       "title_required": "Judul wajib diisi",
+      "owner_required": "Pemilik wajib diisi",
       "expected_close_date_required": "Perkiraan tanggal tutup wajib diisi",
       "date_invalid": "Format tanggal tidak valid",
       "value_invalid": "Nilai harus berupa angka non-negatif (maks 2 desimal)",
