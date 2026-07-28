@@ -16,6 +16,10 @@ pranata-crm/
 │   └── run.py     ← Windows-compatible server entrypoint
 ├── design/        ← Architectural decision records (ADR-001, ADR-002, ...)
 ├── docker-compose.yml
+├── infra/         ← Config for the observability services (Loki, Promtail, Grafana)
+│   ├── grafana/   ← Datasource provisioning
+│   ├── loki/      ← Loki server config
+│   └── promtail/  ← Log shipping / label config
 ├── nginx/         ← Reverse proxy config for the `gateway` service
 │   └── nginx.conf
 ├── postman/       ← Postman collection + environment for exercising the API
@@ -41,6 +45,7 @@ pranata-crm/
 | Password   | passlib + bcrypt                                          |
 | Email      | Resend / SMTP                                             |
 | AI         | LiteLLM (Ollama dev / Groq prod / OpenRouter fallback)    |
+| Logging    | structlog (JSON to stdout) -> Promtail -> Loki -> Grafana |
 
 ## Frontend Stack
 
@@ -58,8 +63,9 @@ pranata-crm/
 ## Running with Docker (Recommended)
 
 `docker-compose.yml` spins up the full stack: PostgreSQL, Redis, RabbitMQ, the API, the
-frontend, and an **nginx gateway** that puts both behind a single origin. Database migrations
-run automatically on API startup via `entrypoint.sh`.
+frontend, an **nginx gateway** that puts both behind a single origin, and the logging stack
+(**Loki + Promtail + Grafana**, see below). Database migrations run automatically on API
+startup via `entrypoint.sh`.
 
 ### 1. Start everything
 
@@ -80,6 +86,9 @@ NAME               STATUS
 pranata_api        Up (healthy)
 pranata_db         Up (healthy)
 pranata_gateway    Up
+pranata_grafana    Up
+pranata_loki       Up (healthy)
+pranata_promtail   Up
 pranata_redis      Up (healthy)
 pranata_rabbitmq   Up (healthy)
 pranata_web        Up
@@ -124,6 +133,82 @@ changes to backend source apply immediately — no rebuild needed. Only changes 
 ```bash
 docker compose down
 ```
+
+### Centralized Logging (Loki + Grafana)
+
+The API writes one structured JSON object per log line to stdout (`request_id`, `user_id`,
+`timestamp`, `module_name`, `endpoint`, `error_details`). Three services turn that into a
+searchable log store:
+
+```text
+api container (JSON to stdout)
+        v
+Promtail  reads Docker container logs, attaches labels
+        v
+Loki      stores + indexes the labels
+        v
+Grafana   query and browse with LogQL
+```
+
+| Service  | Container          | URL / port                                  |
+| -------- | ------------------ | ------------------------------------------- |
+| Loki     | `pranata_loki`     | <http://localhost:3100> (API only, no UI)   |
+| Promtail | `pranata_promtail` | no exposed port                             |
+| Grafana  | `pranata_grafana`  | <http://localhost:3001> (`admin` / `admin`) |
+
+> Grafana is on host port **3001** because the frontend already owns 3000.
+
+Config lives in [`infra/`](infra/): [`loki/loki-config.yml`](infra/loki/loki-config.yml),
+[`promtail/promtail-config.yml`](infra/promtail/promtail-config.yml), and the Grafana
+datasource in
+[`grafana/provisioning/datasources/loki.yml`](infra/grafana/provisioning/datasources/loki.yml).
+The Loki datasource is provisioned automatically — no manual setup after first start.
+
+#### 1. Start
+
+Included in a plain `docker compose up -d`, or start just the logging stack:
+
+```bash
+docker compose up -d loki promtail grafana
+```
+
+#### 2. Query
+
+Open <http://localhost:3001>, log in, go to **Explore**, pick the **Loki** datasource, and
+run LogQL:
+
+```logql
+{container="pranata_api"}                                  # everything from the API
+{container="pranata_api", level="error"}                   # unhandled exceptions only
+{container="pranata_api"} | json | request_id="<uuid>"     # trace one request end-to-end
+{container="pranata_api"} | json | module_name="auth"      # one module's errors
+{container="pranata_api"} | json | user_id="<uuid>"        # everything one user did
+```
+
+Expand a result row to see the parsed JSON fields.
+
+#### Labels vs fields
+
+`container` and `level` are the **only** labels this pipeline adds. Everything else —
+`request_id`, `user_id`, `endpoint`, `module_name` — is queried with a `| json` filter as
+shown above. High-cardinality labels are what kills Loki performance, so do not promote
+those fields to labels when extending
+[`promtail-config.yml`](infra/promtail/promtail-config.yml).
+
+Loki 3.x also derives `service_name` and `detected_level` on its own; those show up on
+results but are not configured here.
+
+#### Notes
+
+- Only `pranata_api` logs are shipped. The db / redis / rabbitmq / web logs are noisy and
+  unstructured; add them via the `filters` block in `promtail-config.yml` when needed.
+- Non-JSON lines (uvicorn access logs, SQL echo) still arrive — the `json` stage skips them,
+  so they simply carry no `level` label.
+- Loki's `/ready` returns 503 for the first ~15s while the ring warms up; the healthcheck
+  retries cover this.
+- Promtail re-discovers the API automatically after `docker compose restart api`.
+- This is a dev/demo setup: filesystem storage, no auth hardening, no retention tuning. Wipe
+  stored logs with `docker compose down -v`.
 
 ---
 
