@@ -20,7 +20,6 @@ scrape_configs:
         regex: "/(.*)"
         target_label: "container"
     pipeline_stages:
-      - docker: {}
       - json:
           expressions:
             level: level
