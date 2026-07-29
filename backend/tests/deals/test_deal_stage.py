@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 from decimal import Decimal
 from unittest.mock import AsyncMock, patch
 
@@ -55,7 +56,7 @@ class DealStageTests(DealsTestCase):
         call_data = mock_update.call_args.args[1]
         self.assertEqual(call_data["status"], "won")
         self.assertEqual(call_data["probability"], 100)
-        self.assertIsNotNone(call_data["actual_close_date"])
+        self.assertEqual(call_data["actual_close_date"], datetime.now(timezone.utc).date())
         self.assertEqual(call_data["weighted_value"], Decimal("500.00"))
 
     @patch("app.modules.deals.repository.DealRepository.get_by_id", new_callable=AsyncMock)
@@ -92,6 +93,7 @@ class DealStageTests(DealsTestCase):
         self.assertEqual(call_data["status"], "lost")
         self.assertEqual(call_data["probability"], 0)
         self.assertEqual(call_data["lost_reason"], "Went with a competitor")
+        self.assertEqual(call_data["actual_close_date"], datetime.now(timezone.utc).date())
 
     @patch("app.modules.deals.repository.DealRepository.update", new_callable=AsyncMock)
     @patch("app.modules.deals.repository.DealRepository.get_by_id", new_callable=AsyncMock)

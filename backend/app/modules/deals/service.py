@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
 
 from app.modules.deals.exceptions import DealNotFound, InvalidStageTransition
@@ -12,6 +12,7 @@ from app.modules.deals.schemas import (
     DealStageUpdate,
     DealUpdate,
 )
+from app.shared.clock import utc_today
 from app.shared.types import DealStage, DealStatus
 
 # The only status values the generic PATCH /deals/{id} endpoint may ever
@@ -177,7 +178,7 @@ class DealService:
             "stage_changed_at": datetime.now(timezone.utc),
         }
 
-        today = date.today()
+        today = utc_today()
         if payload.stage == DealStage.WON.value:
             data["status"] = DealStatus.WON.value
             data["actual_close_date"] = deal.actual_close_date or today
