@@ -56,3 +56,11 @@ asyncio_mode = "auto"
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+[tool.ruff.lint]
+# E4/E7/E9 + F are ruff's defaults, restated because naming `select` at all
+# replaces them. DTZ (flake8-datetimez) is the addition: it rejects
+# date.today() and datetime.now() without a tz, which is what keeps the
+# backend's clock reads going through app/shared/clock.py instead of
+# silently picking up the container's OS timezone (issue #48).
+select = ["E4", "E7", "E9", "F", "DTZ"]
