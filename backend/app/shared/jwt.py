@@ -1,14 +1,15 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 import jwt
 
 from app.config import get_settings
+from app.shared.clock import utc_now
 
 
 def create_access_token(user_id: str, tenant_id: str) -> str:
     settings = get_settings()
-    now = datetime.now(timezone.utc)
+    now = utc_now()
     payload = {
         "sub": user_id,
         "tid": tenant_id,
@@ -21,7 +22,7 @@ def create_access_token(user_id: str, tenant_id: str) -> str:
 
 def create_refresh_token(user_id: str, tenant_id: str) -> tuple[str, str]:
     settings = get_settings()
-    now = datetime.now(timezone.utc)
+    now = utc_now()
     jti = str(uuid.uuid4())
     payload = {
         "sub": user_id,

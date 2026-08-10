@@ -1,6 +1,6 @@
 """Internal domain logic for auth. Never imported from outside this module."""
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 import resend
 
@@ -28,6 +28,7 @@ from app.modules.auth.schemas import (
     RegisterTenantResponse,
     UserSummary,
 )
+from app.shared.clock import utc_now
 from app.shared.jwt import create_access_token, create_refresh_token, decode_token
 from app.shared.security import hash_password, verify_password
 from app.shared.types import SuiteRole
@@ -167,8 +168,7 @@ class AuthService:
         from app.config import get_settings
         import jwt as _jwt
         settings = get_settings()
-        from datetime import datetime, timedelta, timezone
-        now = datetime.now(timezone.utc)
+        now = utc_now()
         token = _jwt.encode(
             {
                 "purpose": "invite",
@@ -263,7 +263,7 @@ class AuthService:
         refresh_token, _jti = create_refresh_token(str(user.id), str(tenant.id))
 
         settings = get_settings()
-        expires_at = datetime.now(timezone.utc) + timedelta(
+        expires_at = utc_now() + timedelta(
             days=settings.jwt_refresh_token_expire_days
         )
         await self._repo.store_refresh_token(

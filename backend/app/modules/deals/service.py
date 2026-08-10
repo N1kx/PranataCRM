@@ -1,5 +1,4 @@
 import uuid
-from datetime import datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
 
 from app.modules.deals.exceptions import DealNotFound, InvalidStageTransition
@@ -12,7 +11,7 @@ from app.modules.deals.schemas import (
     DealStageUpdate,
     DealUpdate,
 )
-from app.shared.clock import utc_today
+from app.shared.clock import utc_now, utc_today
 from app.shared.types import DealStage, DealStatus
 
 # The only status values the generic PATCH /deals/{id} endpoint may ever
@@ -55,7 +54,7 @@ class DealService:
         # client (DealCreate has no status field at all).
         data["status"] = DealStatus.OPEN.value
         data["weighted_value"] = _compute_weighted_value(value, probability)
-        data["stage_changed_at"] = datetime.now(timezone.utc)
+        data["stage_changed_at"] = utc_now()
 
         data["tenant_id"] = tenant_id
         data["created_by"] = actor_id
@@ -175,7 +174,7 @@ class DealService:
 
         data: dict = {
             "stage": payload.stage,
-            "stage_changed_at": datetime.now(timezone.utc),
+            "stage_changed_at": utc_now(),
         }
 
         today = utc_today()
