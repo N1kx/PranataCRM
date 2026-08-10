@@ -1,9 +1,16 @@
 import uuid
+from datetime import date
 from decimal import Decimal
 from unittest.mock import AsyncMock, patch
 
 from tests.deals.base import DealsTestCase
 from tests.deals.test_deals import _fake_deal
+
+# Patched over the service's clock so the won/lost tests assert a value that
+# could only have come from app.shared.clock.utc_today(). Asserting against a
+# freshly-computed today() instead would pass just as happily if the service
+# went back to the OS-local date.today() — on a UTC box the two agree.
+_FIXED_TODAY = date(2026, 3, 15)
 
 
 class DealStageTests(DealsTestCase):
@@ -31,10 +38,11 @@ class DealStageTests(DealsTestCase):
         from app.modules.auth.dependencies import get_current_user
         app.dependency_overrides.pop(get_current_user, None)
 
+    @patch("app.modules.deals.service.utc_today", return_value=_FIXED_TODAY)
     @patch("app.modules.deals.repository.DealRepository.update", new_callable=AsyncMock)
     @patch("app.modules.deals.repository.DealRepository.get_by_id", new_callable=AsyncMock)
     async def test_stage_to_won_sets_status_probability_and_close_date(
-        self, mock_get, mock_update
+        self, mock_get, mock_update, _mock_today
     ):
         mock_get.return_value = _fake_deal(
             self._deal_id, self._tenant_id,
@@ -55,7 +63,7 @@ class DealStageTests(DealsTestCase):
         call_data = mock_update.call_args.args[1]
         self.assertEqual(call_data["status"], "won")
         self.assertEqual(call_data["probability"], 100)
-        self.assertIsNotNone(call_data["actual_close_date"])
+        self.assertEqual(call_data["actual_close_date"], _FIXED_TODAY)
         self.assertEqual(call_data["weighted_value"], Decimal("500.00"))
 
     @patch("app.modules.deals.repository.DealRepository.get_by_id", new_callable=AsyncMock)
@@ -71,9 +79,12 @@ class DealStageTests(DealsTestCase):
         self.assertEqual(resp.status_code, 422)
         self.assertEqual(resp.json()["error"]["code"], "INVALID_STAGE_TRANSITION")
 
+    @patch("app.modules.deals.service.utc_today", return_value=_FIXED_TODAY)
     @patch("app.modules.deals.repository.DealRepository.update", new_callable=AsyncMock)
     @patch("app.modules.deals.repository.DealRepository.get_by_id", new_callable=AsyncMock)
-    async def test_stage_to_lost_with_lost_reason_succeeds(self, mock_get, mock_update):
+    async def test_stage_to_lost_with_lost_reason_succeeds(
+        self, mock_get, mock_update, _mock_today
+    ):
         mock_get.return_value = _fake_deal(self._deal_id, self._tenant_id, stage="proposal")
         mock_update.return_value = _fake_deal(
             self._deal_id, self._tenant_id, stage="lost", status="lost",
@@ -92,6 +103,7 @@ class DealStageTests(DealsTestCase):
         self.assertEqual(call_data["status"], "lost")
         self.assertEqual(call_data["probability"], 0)
         self.assertEqual(call_data["lost_reason"], "Went with a competitor")
+        self.assertEqual(call_data["actual_close_date"], _FIXED_TODAY)
 
     @patch("app.modules.deals.repository.DealRepository.update", new_callable=AsyncMock)
     @patch("app.modules.deals.repository.DealRepository.get_by_id", new_callable=AsyncMock)

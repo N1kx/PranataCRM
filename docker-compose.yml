@@ -4,6 +4,9 @@ services:
     container_name: pranata_db
     restart: unless-stopped
     environment:
+      # Pinned so date/time logic can never depend on the host's timezone.
+      # See app/shared/clock.py.
+      TZ: UTC
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: pranata_crm
@@ -58,6 +61,9 @@ services:
     ports:
       - "8230:8000"
     environment:
+      # Pinned so date/time logic can never depend on the host's timezone.
+      # See app/shared/clock.py.
+      TZ: UTC
       APP_ENV: development
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/pranata_crm
       REDIS_URL: redis://redis:6379/0

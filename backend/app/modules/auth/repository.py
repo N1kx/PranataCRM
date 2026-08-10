@@ -1,12 +1,13 @@
 import hashlib
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.auth.models import RefreshToken, Role, Tenant, User, UserRole
 from app.modules.licensing.models import App, AppSeat, AppSubscription
+from app.shared.clock import utc_now
 from app.shared.types import BillingPlan, SeatStatus, SuiteRole, SubscriptionStatus
 
 
@@ -75,7 +76,7 @@ class AuthRepository:
         await self._session.execute(
             update(User)
             .where(User.id == user_id)
-            .values(last_login_at=datetime.now(timezone.utc))
+            .values(last_login_at=utc_now())
         )
 
     async def search_users(
