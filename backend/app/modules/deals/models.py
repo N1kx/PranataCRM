@@ -10,7 +10,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.shared.base import AuditMixin, Base, TimestampMixin, UUIDMixin
-from app.shared.types import DealStage, DealStatus, DealType, Priority
+from app.shared.types import DealStage, DealStatus
 
 
 class Deal(Base, UUIDMixin, TimestampMixin, AuditMixin):
