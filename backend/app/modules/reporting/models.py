@@ -6,7 +6,6 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.shared.base import Base, UUIDMixin
-from app.shared.types import uuid7
 
 
 class ReportSnapshot(Base, UUIDMixin):

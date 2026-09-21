@@ -2,7 +2,7 @@ import uuid
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-from tests.auth.base import AuthTestCase, OWNER
+from tests.auth.base import AuthTestCase
 
 
 def _fake_tenant(slug: str = "nxcorp") -> SimpleNamespace:

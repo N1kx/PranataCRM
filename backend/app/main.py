@@ -85,14 +85,14 @@ async def health() -> dict:
 
 # ── Module routers ────────────────────────────────────────────────────────────
 
-from app.modules.auth.router import router as auth_router, users_router
-from app.modules.contacts.router import router as contacts_router
-from app.modules.companies.router import router as companies_router
-from app.modules.deals.router import router as deals_router
-from app.modules.ai.router import router as ai_router
-from app.modules.billing.router import router as billing_router
-from app.modules.geo.router import router as geo_router
-from app.modules.geo.admin_router import router as geo_admin_router
+from app.modules.auth.router import router as auth_router, users_router  # noqa: E402
+from app.modules.contacts.router import router as contacts_router  # noqa: E402
+from app.modules.companies.router import router as companies_router  # noqa: E402
+from app.modules.deals.router import router as deals_router  # noqa: E402
+from app.modules.ai.router import router as ai_router  # noqa: E402
+from app.modules.billing.router import router as billing_router  # noqa: E402
+from app.modules.geo.router import router as geo_router  # noqa: E402
+from app.modules.geo.admin_router import router as geo_admin_router  # noqa: E402
 
 API_PREFIX = "/api/v1"
 

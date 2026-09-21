@@ -3,15 +3,14 @@ from datetime import date, datetime
 
 from sqlalchemy import (
     Boolean, CheckConstraint, Date, DateTime, Index,
-    Integer, String, Text, UniqueConstraint,
+    Integer, String, Text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.shared.base import AuditMixin, Base, TimestampMixin, UUIDMixin
 from app.shared.types import (
-    ActivityDirection, ActivityStatus, ActivityType,
-    ContactStatus, LifecycleStage, PreferredContactMethod, Priority,
+    ActivityStatus, ContactStatus,
 )
 
 

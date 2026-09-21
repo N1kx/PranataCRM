@@ -1,6 +1,4 @@
 import uuid
-from datetime import datetime, timezone
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 from tests.companies.base import CompaniesTestCase
